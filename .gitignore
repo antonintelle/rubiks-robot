@@ -1,0 +1,77 @@
+# ========================================
+# .gitignore - pipeline-complet-rubik
+# ========================================
+
+# --- Environnements Python ---
+env/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- IDE et outils de développement ---
+.idea/
+.vscode/
+*.iml
+
+# --- Dossiers temporaires ou inutiles ---
+captures/
+tests/__pycache__/
+logs/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+*.log
+*.bak
+*.tmp
+*.zip
+*.tar
+*.gz
+*.7z
+*.rar
+
+# --- Fichier temporaire local ---
+toto.txt
+
+# --- Images générées automatiquement (hors tmp) ---
+captures/**/*.jpg
+captures/**/*.jpeg
+captures/**/*.png
+captures/**/*.bmp
+captures/**/*.gif
+
+# --- On garde le contenu du dossier 'in/' (ex : best.pt) ---
+!in/**
+!in/*
+
+# --- On garde les images actuelles dans tmp ---
+!tmp/B.jpg
+!tmp/D.jpg
+!tmp/F.jpg
+!tmp/L.jpg
+!tmp/R.jpg
+!tmp/U.jpg
+
+# --- Mais on ignore toute nouvelle image future dans tmp ---
+tmp/*.jpg
+tmp/*.jpeg
+tmp/*.png
+tmp/*.bmp
+tmp/*.gif
+!tmp/B.jpg
+!tmp/D.jpg
+!tmp/F.jpg
+!tmp/L.jpg
+!tmp/R.jpg
+!tmp/U.jpg
+
+# --- On garde les documents Office 365 ---
+!docs/Projet Rubik's cube - algorithme de résolution - AP5 - 2025-2026.docx
+!docs/Travaux sur la les algorithmes.pptx
+
+# --- Fichiers système divers ---
+Thumbs.db
+Desktop.ini
+.DS_Store
