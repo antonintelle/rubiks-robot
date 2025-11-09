@@ -1,0 +1,40 @@
+# =====================================================================
+# Rubik's Cube Solver - Raspberry Pi OS Bookworm 64-bit
+# =====================================================================
+
+# === Vision & Traitement d'image ===
+# OpenCV : installé via apt pour compatibilité libcamera
+# -> sudo apt install python3-opencv
+# numpy et matplotlib : via pip (OK)
+#numpy>=1.24.0
+#matplotlib>=3.7.0
+Pillow>=10.0.0
+
+# === Résolution cube ===
+kociemba>=1.2.0
+RubikTwoPhase>=1.0.0
+
+# === Détection automatique (YOLOv8) ===
+ultralytics>=8.0.0
+
+# === Caméra moderne (libcamera / Picamera2) ===
+# installé via apt, NE PAS pip install
+# -> sudo apt install python3-picamera2
+
+# === Interface graphique (Tkinter) ===
+# Tkinter installé via apt : sudo apt install python3-tk python3-pil python3-pil.imagetk
+
+# === Affichage terminal ===
+colorama>=0.4.6
+
+# === Tests (optionnel) ===
+pytest>=7.4.0
+
+# === Contrôle de l’anneau lumineux (NeoPixel) ===
+adafruit-circuitpython-neopixel>=6.3.0
+adafruit-blinka>=8.0.0
+rpi_ws281x>=5.0.0
+
+# === Contrôle clavier matriciel (GPIO moderne) ===
+lgpio>=0.2.2
+gpiozero>=2.0

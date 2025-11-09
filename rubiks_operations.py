@@ -1,0 +1,919 @@
+# rubiks_operations.py - Module des opérations Rubik's Cube
+# ============================================================================
+# RÉSUMÉ : Module abstrait qui définit toutes les opérations disponibles
+#          pour le système de reconnaissance et résolution du Rubik's Cube.
+#          
+# OBJECTIF : Séparer la logique métier de l'interface utilisateur pour permettre :
+#            - Un mode texte/CLI
+#            - Un GUI personnalisé (Tkinter, PyQt, web, etc.)
+#            - Une API REST
+#            - Des tests unitaires
+#
+# ARCHITECTURE :
+#   - Toutes les fonctions retournent des dictionnaires standardisés
+#   - Gestion des erreurs avec try/except
+#   - Documentation complète de chaque fonction
+#   - Aucune interaction directe avec l'utilisateur (input/print minimal)
+#   - Paramètres explicites pour tous les modes de fonctionnement
+#
+# UTILISATION :
+#   from rubiks_operations import RubiksOperations
+#   
+#   ops = RubiksOperations()
+#   result = ops.calibrate_zones()
+#   if result['success']:
+#       print(result['data'])
+#   else:
+#       print(result['error'])
+# ============================================================================
+
+import os
+import glob
+import json
+from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import dataclass, asdict
+from enum import Enum
+
+
+class DebugMode(Enum):
+    """Modes de debug disponibles"""
+    NONE = "none"      # Silencieux
+    TEXT = "text"      # Texte uniquement
+    BOTH = "both"      # Texte + graphique
+    GRAPHICAL = "graphical"  # Graphique uniquement
+
+
+class ProcessingMode(Enum):
+    """Modes de traitement disponibles"""
+    ROBOT = "robot"           # Mode robot complet
+    ROBOT_RAW = "robot_raw"   # Mode robot sans résolution
+    PRODUCTION = "production" # Mode production avec debug
+    TEST = "test"             # Mode test
+
+
+@dataclass
+class OperationResult:
+    """Structure standardisée pour les résultats d'opération"""
+    success: bool
+    data: Optional[Any] = None
+    error: Optional[str] = None
+    message: Optional[str] = None
+    metadata: Optional[Dict] = None
+
+    def to_dict(self) -> Dict:
+        return asdict(self)
+
+
+@dataclass
+class CalibrationStatus:
+    """État de la calibration"""
+    roi_calibrated: bool
+    roi_faces_count: int
+    roi_faces: List[str]
+    roi_missing_faces: List[str]
+    colors_calibrated: bool
+    colors_count: int
+    colors_list: List[str]
+
+
+class RubiksOperations:
+    """
+    Classe principale qui encapsule toutes les opérations du système Rubik's Cube.
+    
+    Cette classe sépare la logique métier de l'interface utilisateur, permettant
+    une réutilisation facile dans différents contextes (CLI, GUI, API).
+    """
+
+    def __init__(self, tmp_folder: str = "tmp", config_folder: str = "."):
+        """
+        Initialise le gestionnaire d'opérations.
+        
+        Args:
+            tmp_folder: Dossier contenant les images temporaires
+            config_folder: Dossier contenant les fichiers de configuration
+        """
+        self.tmp_folder = tmp_folder
+        self.config_folder = config_folder
+        self.roi_calibration_file = os.path.join(config_folder, "rubiks_calibration.json")
+        self.color_calibration_file = os.path.join(config_folder, "rubiks_color_calibration.json")
+
+    # ========================================================================
+    # CALIBRATION
+    # ========================================================================
+
+    def calibrate_zones_interactive(self) -> Dict:
+        """
+        Lance la calibration interactive des zones ROI.
+        
+        Returns:
+            Dict avec success, data (nombre de faces calibrées), error
+        """
+        try:
+            from calibration_roi import calibration_menu
+            calibration_menu()
+            return OperationResult(
+                success=True,
+                message="Calibration des zones terminée"
+            ).to_dict()
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors de la calibration des zones: {str(e)}"
+            ).to_dict()
+
+    def calibrate_colors_interactive(self) -> Dict:
+        """
+        Lance la calibration interactive des couleurs.
+        
+        Returns:
+            Dict avec success, data (couleurs calibrées), error
+        """
+        try:
+            from process_images_cube import calibrate_colors_interactive
+            calibrate_colors_interactive()
+            return OperationResult(
+                success=True,
+                message="Calibration des couleurs terminée"
+            ).to_dict()
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors de la calibration des couleurs: {str(e)}"
+            ).to_dict()
+
+    def get_calibration_status(self) -> Dict:
+        """
+        Récupère l'état complet de la calibration.
+        
+        Returns:
+            Dict avec success, data (CalibrationStatus), error
+        """
+        try:
+            from calibration_rubiks import get_calibration_stats, load_calibration
+            from process_images_cube import load_color_calibration
+
+            stats = get_calibration_stats()
+            roi_data = load_calibration()
+            color_data = load_color_calibration()
+
+            # Analyse ROI
+            roi_calibrated = roi_data is not None and len(roi_data) > 0
+            roi_faces = list(roi_data.keys()) if roi_data else []
+            all_faces = ['F', 'R', 'B', 'L', 'U', 'D']
+            roi_missing = [f for f in all_faces if f not in roi_faces]
+
+            # Analyse couleurs
+            colors_calibrated = color_data is not None and len(color_data) > 0
+            colors_list = list(color_data.keys()) if color_data else []
+
+            status = CalibrationStatus(
+                roi_calibrated=roi_calibrated,
+                roi_faces_count=len(roi_faces),
+                roi_faces=roi_faces,
+                roi_missing_faces=roi_missing,
+                colors_calibrated=colors_calibrated,
+                colors_count=len(colors_list),
+                colors_list=colors_list
+            )
+
+            return OperationResult(
+                success=True,
+                data=asdict(status),
+                metadata=stats
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors de la récupération du statut: {str(e)}"
+            ).to_dict()
+
+    def load_roi_calibration(self) -> Dict:
+        """
+        Charge les données de calibration ROI.
+        
+        Returns:
+            Dict avec success, data (dict des ROI par face), error
+        """
+        try:
+            from calibration_rubiks import load_calibration
+            roi_data = load_calibration()
+            
+            if roi_data is None:
+                return OperationResult(
+                    success=False,
+                    error="Aucune calibration ROI trouvée"
+                ).to_dict()
+            
+            return OperationResult(
+                success=True,
+                data=roi_data
+            ).to_dict()
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors du chargement de la calibration ROI: {str(e)}"
+            ).to_dict()
+
+    def load_color_calibration(self) -> Dict:
+        """
+        Charge les données de calibration des couleurs.
+        
+        Returns:
+            Dict avec success, data (dict des couleurs), error
+        """
+        try:
+            from process_images_cube import load_color_calibration
+            color_data = load_color_calibration()
+            
+            if color_data is None:
+                return OperationResult(
+                    success=False,
+                    error="Aucune calibration des couleurs trouvée"
+                ).to_dict()
+            
+            return OperationResult(
+                success=True,
+                data=color_data
+            ).to_dict()
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors du chargement de la calibration des couleurs: {str(e)}"
+            ).to_dict()
+
+    # ========================================================================
+    # PRODUCTION ET TRAITEMENT
+    # ========================================================================
+
+    def process_rubiks_cube(self, debug: str = "text") -> Dict:
+        """
+        Traite les 6 faces du cube et génère le code Singmaster.
+        
+        Args:
+            debug: Mode de debug ("none", "text", "both")
+            
+        Returns:
+            Dict avec success, data (singmaster code), error
+        """
+        try:
+            from calibration_rubiks import load_calibration
+            from process_images_cube import load_color_calibration
+            from processing_rubiks import production_mode
+
+            # Vérification des calibrations
+            roi_data = load_calibration()
+            if roi_data is None:
+                return OperationResult(
+                    success=False,
+                    error="Aucune calibration ROI trouvée. Calibrez d'abord les zones."
+                ).to_dict()
+
+            color_calibration = load_color_calibration()
+            if color_calibration is None:
+                return OperationResult(
+                    success=False,
+                    error="Aucune calibration des couleurs trouvée. Calibrez d'abord les couleurs."
+                ).to_dict()
+
+            # Traitement
+            result = production_mode(roi_data, color_calibration, debug=debug)
+            
+            return OperationResult(
+                success=result["success"],
+                data={
+                    "singmaster": result.get("singmaster"),
+                    "faces": result.get("faces", {})
+                },
+                error=result.get("error"),
+                message="Code Singmaster généré avec succès" if result["success"] else "Échec de la génération"
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors du traitement: {str(e)}"
+            ).to_dict()
+
+    def process_api_mode(self, debug: str = "text") -> Dict:
+        """
+        Traite le cube en mode API (sans interface).
+        
+        Args:
+            debug: Mode de debug ("none", "text", "both")
+            
+        Returns:
+            Dict avec success, data (singmaster), error
+        """
+        try:
+            from processing_rubiks import process_rubiks_to_singmaster
+            result = process_rubiks_to_singmaster(debug=debug)
+            
+            return OperationResult(
+                success=result["success"],
+                data={"singmaster": result.get("singmaster")},
+                error=result.get("error")
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur en mode API: {str(e)}"
+            ).to_dict()
+
+    def quick_pipeline_test(self, mode: str = "robot_raw", debug: str = "text") -> Dict:
+        """
+        Test rapide du pipeline avec encodage corrigé.
+        
+        Args:
+            mode: Mode de traitement ("robot_raw", "robot", etc.)
+            debug: Mode de debug
+            
+        Returns:
+            Dict avec success, data, error
+        """
+        try:
+            from processing_rubiks import quick_pipeline_test_corrected
+            success = quick_pipeline_test_corrected(self.tmp_folder, debug=debug, mode=mode)
+            
+            return OperationResult(
+                success=success,
+                message="Pipeline rapide exécuté avec succès" if success else "Échec du pipeline rapide"
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors du test rapide: {str(e)}"
+            ).to_dict()
+
+    # ========================================================================
+    # DEBUG
+    # ========================================================================
+
+    def debug_single_face(self, face: str) -> Dict:
+        """
+        Analyse détaillée d'une face spécifique.
+        
+        Args:
+            face: Face à analyser (F, R, B, L, U, D)
+            
+        Returns:
+            Dict avec success, data (analyse de la face), error
+        """
+        try:
+            from calibration_rubiks import load_calibration
+            from process_images_cube import load_color_calibration, test_single_face_debug
+
+            face = face.upper()
+            if face not in ['F', 'R', 'B', 'L', 'U', 'D']:
+                return OperationResult(
+                    success=False,
+                    error=f"Face invalide: {face}. Utilisez F, R, B, L, U ou D"
+                ).to_dict()
+
+            roi_data = load_calibration()
+            if roi_data is None or face not in roi_data:
+                return OperationResult(
+                    success=False,
+                    error=f"Face {face} non calibrée"
+                ).to_dict()
+
+            color_calibration = load_color_calibration()
+            test_single_face_debug(face, roi_data[face], color_calibration)
+
+            return OperationResult(
+                success=True,
+                message=f"Analyse de la face {face} terminée"
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors du debug de la face: {str(e)}"
+            ).to_dict()
+
+    def debug_color_mapping(self) -> Dict:
+        """
+        Diagnostic du mapping des couleurs.
+        
+        Returns:
+            Dict avec success, data, error
+        """
+        try:
+            from processing_rubiks import debug_color_mapping
+            debug_color_mapping(self.tmp_folder)
+            
+            return OperationResult(
+                success=True,
+                message="Diagnostic couleur terminé"
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors du diagnostic couleur: {str(e)}"
+            ).to_dict()
+
+    def debug_vision_and_rotations(self) -> Dict:
+        """
+        Debug complet de la vision et des rotations.
+        
+        Returns:
+            Dict avec success, message, error
+        """
+        try:
+            from processing_rubiks import full_debug_pipeline
+            full_debug_pipeline()
+            
+            return OperationResult(
+                success=True,
+                message="Debug vision et rotations terminé"
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors du debug vision: {str(e)}"
+            ).to_dict()
+
+    # ========================================================================
+    # SOLVEUR
+    # ========================================================================
+
+    def solve_cube(self, cubestring: str) -> Dict:
+        """
+        Résout un cube à partir d'une chaîne Singmaster.
+        
+        Args:
+            cubestring: Chaîne de 54 caractères représentant le cube
+            
+        Returns:
+            Dict avec success, data (solution), error
+        """
+        try:
+            from solver_wrapper import solve_cube
+            
+            if len(cubestring) != 54:
+                return OperationResult(
+                    success=False,
+                    error=f"Chaîne invalide: {len(cubestring)} caractères au lieu de 54"
+                ).to_dict()
+
+            solution = solve_cube(cubestring)
+            
+            return OperationResult(
+                success=True,
+                data={"solution": solution, "cubestring": cubestring}
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors de la résolution: {str(e)}"
+            ).to_dict()
+
+    def solve_and_get_url(self, cubestring: str, method: str = "kociemba", 
+                          site: str = "alg") -> Dict:
+        """
+        Résout un cube et génère une URL de visualisation.
+        
+        Args:
+            cubestring: Chaîne de 54 caractères
+            method: Méthode de résolution ("kociemba", etc.)
+            site: Site de visualisation ("alg", "twizzle", etc.)
+            
+        Returns:
+            Dict avec success, data (solution, url), error
+        """
+        try:
+            from solver_wrapper import solve_cube
+            from url_convertor import convert_to_url
+
+            if len(cubestring) != 54:
+                return OperationResult(
+                    success=False,
+                    error=f"Chaîne invalide: {len(cubestring)} caractères au lieu de 54"
+                ).to_dict()
+
+            solution = solve_cube(cubestring)
+            url = convert_to_url(solution, method=method, site=site)
+            
+            return OperationResult(
+                success=True,
+                data={
+                    "solution": solution,
+                    "url": url,
+                    "cubestring": cubestring
+                }
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors de la résolution et génération d'URL: {str(e)}"
+            ).to_dict()
+
+    # ========================================================================
+    # MODE ROBOT
+    # ========================================================================
+
+    def run_robot_mode(self, do_solve: bool = True, do_execute: bool = True,
+                       debug: str = "text") -> Dict:
+        """
+        Exécute le pipeline complet en mode robot.
+        
+        Args:
+            do_solve: Si True, résout le cube
+            do_execute: Si True, exécute les mouvements
+            debug: Mode de debug
+            
+        Returns:
+            Dict avec success, data (cubestring, solution), error
+        """
+        try:
+            from robot_solver import RobotCubeSolver
+            
+            solver = RobotCubeSolver(image_folder=self.tmp_folder, debug=debug)
+            cubestring = solver.run(do_solve=do_solve, do_execute=do_execute)
+            
+            return OperationResult(
+                success=True,
+                data={
+                    "cubestring": cubestring,
+                    "solved": do_solve,
+                    "executed": do_execute
+                },
+                message="Pipeline robot terminé avec succès"
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur en mode robot: {str(e)}"
+            ).to_dict()
+
+    # ========================================================================
+    # CAPTURE D'IMAGES
+    # ========================================================================
+
+    def capture_images(self, rotation: int = 0, folder: str = "captures") -> Dict:
+        """
+        Capture des images depuis la caméra.
+        
+        Args:
+            rotation: Rotation à appliquer aux images (0, 90, 180, 270)
+            folder: Dossier de destination
+            
+        Returns:
+            Dict avec success, data (liste des fichiers), error
+        """
+        try:
+            from capture_photo_from_311 import capture_loop
+            
+            output = capture_loop(rotation=rotation, folder=folder)
+            
+            if output:
+                return OperationResult(
+                    success=True,
+                    data={"files": output, "folder": folder},
+                    message=f"Images capturées dans {folder}"
+                ).to_dict()
+            else:
+                return OperationResult(
+                    success=False,
+                    error="Échec de la capture d'images"
+                ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors de la capture: {str(e)}"
+            ).to_dict()
+
+    def capture_single_image(self, rotation: int = 0, folder: str = "captures") -> Dict:
+        """
+        Capture une seule image.
+        """
+        try:
+            from capture_photo_from_311 import capture_image
+            import os, datetime
+
+            os.makedirs(folder, exist_ok=True)
+            ts = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+            filepath = os.path.join(folder, f"capture_{ts}.jpg")   # ✅ on crée le chemin complet ici
+
+            path = capture_image(filename=filepath, rotation=rotation)      # ✅ on passe le bon paramètre
+            if path and os.path.exists(path):
+                return OperationResult(
+                    success=True,
+                    data={"file": path},
+                    message=f"Image capturée: {path}"
+                ).to_dict()
+            else:
+                return OperationResult(
+                    success=False,
+                    error="Échec de la capture"
+                ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors de la capture: {str(e)}"
+            ).to_dict()
+
+
+    # ========================================================================
+    # TESTS GPIO (ANNEAU LUMINEUX, MOTEUR, ETC.)
+    # ========================================================================
+
+    def test_anneau_lumineux(self) -> Dict:
+        """
+        Lance le menu interactif de l’anneau lumineux (NeoPixel Ring).
+        Si le script n’est pas exécuté en sudo, relance automatiquement
+        le module en sudo pour permettre l’accès au GPIO18.
+        """
+        import os, sys, subprocess, importlib
+
+        try:
+            # Vérifie si on est en sudo (uid=0)
+            if os.geteuid() != 0:
+                print("⚙️  Relance automatique du test de l’anneau lumineux avec sudo...")
+                # Re-lance Python avec sudo dans le même dossier
+                cmd = [
+                    "sudo",
+                    sys.executable,
+                    "-m", "anneau_lumineux"
+                ]
+                subprocess.run(cmd, check=True)
+                return OperationResult(
+                    success=True,
+                    message="Test de l’anneau lumineux exécuté avec sudo"
+                ).to_dict()
+
+            # Si déjà root, on peut importer directement
+            import anneau_lumineux
+            importlib.reload(anneau_lumineux)
+
+            if hasattr(anneau_lumineux, "main"):
+                print("\n🔌 Test GPIO : lancement du menu de l’anneau lumineux (Ctrl+C pour revenir)")
+                anneau_lumineux.main()
+                return OperationResult(
+                    success=True,
+                    message="Test de l’anneau lumineux terminé"
+                ).to_dict()
+            else:
+                return OperationResult(
+                    success=False,
+                    error="Le module 'anneau_lumineux' ne contient pas de fonction main()."
+                ).to_dict()
+
+        except subprocess.CalledProcessError as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors de l’exécution avec sudo : {e}"
+            ).to_dict()
+        except KeyboardInterrupt:
+            return OperationResult(
+                success=True,
+                message="Interruption utilisateur (retour au menu principal)"
+            ).to_dict()
+        except ModuleNotFoundError:
+            return OperationResult(
+                success=False,
+                error="Module 'anneau_lumineux' introuvable. Vérifie sa présence dans le projet."
+            ).to_dict()
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors du test de l’anneau lumineux: {str(e)}"
+            ).to_dict()
+
+
+    # ========================================================================
+    # UTILITAIRES
+    # ========================================================================
+
+    def cleanup_tmp_files(self, confirm: bool = True) -> Dict:
+        """
+        Nettoie les fichiers temporaires en gardant les originaux.
+        
+        Args:
+            confirm: Si True, demande confirmation (pour mode interactif)
+            
+        Returns:
+            Dict avec success, data (stats), error
+        """
+        try:
+            original_files = ["F.jpg", "R.jpg", "B.jpg", "L.jpg", "U.jpg", "D.jpg"]
+            original_paths = [os.path.join(self.tmp_folder, f) for f in original_files]
+
+            if not os.path.exists(self.tmp_folder):
+                return OperationResult(
+                    success=False,
+                    error=f"Le dossier {self.tmp_folder} n'existe pas"
+                ).to_dict()
+
+            all_files = glob.glob(os.path.join(self.tmp_folder, "*"))
+            files_to_delete = []
+            files_kept = []
+
+            for file_path in all_files:
+                if os.path.isfile(file_path):
+                    if file_path in original_paths:
+                        files_kept.append(os.path.basename(file_path))
+                    else:
+                        files_to_delete.append(file_path)
+
+            if not files_to_delete:
+                return OperationResult(
+                    success=True,
+                    data={
+                        "deleted": 0,
+                        "kept": len(files_kept),
+                        "files_kept": files_kept
+                    },
+                    message="Aucun fichier temporaire à supprimer"
+                ).to_dict()
+
+            # Si pas de confirmation requise, on supprime directement
+            if not confirm:
+                deleted_count = 0
+                failed_count = 0
+
+                for file_path in files_to_delete:
+                    try:
+                        os.remove(file_path)
+                        deleted_count += 1
+                    except Exception:
+                        failed_count += 1
+
+                return OperationResult(
+                    success=True,
+                    data={
+                        "deleted": deleted_count,
+                        "failed": failed_count,
+                        "kept": len(files_kept),
+                        "files_kept": files_kept
+                    },
+                    message=f"{deleted_count} fichier(s) supprimé(s)"
+                ).to_dict()
+
+            # Sinon, on retourne la liste pour confirmation
+            return OperationResult(
+                success=True,
+                data={
+                    "to_delete": len(files_to_delete),
+                    "to_keep": len(files_kept),
+                    "files_to_delete": [os.path.basename(f) for f in files_to_delete],
+                    "files_kept": files_kept
+                },
+                message=f"{len(files_to_delete)} fichier(s) à supprimer"
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors du nettoyage: {str(e)}"
+            ).to_dict()
+
+    def confirm_cleanup(self) -> Dict:
+        """
+        Exécute le nettoyage après confirmation.
+        Utilisé en mode interactif après cleanup_tmp_files(confirm=True).
+        
+        Returns:
+            Dict avec success, data (stats de suppression), error
+        """
+        return self.cleanup_tmp_files(confirm=False)
+
+    def get_available_faces(self) -> Dict:
+        """
+        Liste les faces disponibles dans le dossier tmp.
+        
+        Returns:
+            Dict avec success, data (liste des faces), error
+        """
+        try:
+            faces = ['F', 'R', 'B', 'L', 'U', 'D']
+            available = []
+            missing = []
+
+            for face in faces:
+                face_path = os.path.join(self.tmp_folder, f"{face}.jpg")
+                if os.path.exists(face_path):
+                    available.append(face)
+                else:
+                    missing.append(face)
+
+            return OperationResult(
+                success=True,
+                data={
+                    "available": available,
+                    "missing": missing,
+                    "total": len(available)
+                }
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors de la vérification des faces: {str(e)}"
+            ).to_dict()
+
+    def get_system_info(self) -> Dict:
+        """
+        Récupère les informations système.
+        
+        Returns:
+            Dict avec success, data (infos système), error
+        """
+        try:
+            info = {
+                "tmp_folder": self.tmp_folder,
+                "config_folder": self.config_folder,
+                "roi_calibration_exists": os.path.exists(self.roi_calibration_file),
+                "color_calibration_exists": os.path.exists(self.color_calibration_file),
+                "tmp_folder_exists": os.path.exists(self.tmp_folder)
+            }
+
+            # Compte les fichiers dans tmp
+            if os.path.exists(self.tmp_folder):
+                tmp_files = len([f for f in os.listdir(self.tmp_folder) 
+                               if os.path.isfile(os.path.join(self.tmp_folder, f))])
+                info["tmp_files_count"] = tmp_files
+
+            return OperationResult(
+                success=True,
+                data=info
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors de la récupération des infos système: {str(e)}"
+            ).to_dict()
+
+
+# ============================================================================
+# FONCTIONS D'AIDE POUR L'UTILISATION EN MODE SCRIPT
+# ============================================================================
+
+def create_operations(tmp_folder: str = "tmp", config_folder: str = ".") -> RubiksOperations:
+    """
+    Factory function pour créer une instance de RubiksOperations.
+    
+    Args:
+        tmp_folder: Dossier des images temporaires
+        config_folder: Dossier de configuration
+        
+    Returns:
+        Instance de RubiksOperations
+    """
+    return RubiksOperations(tmp_folder=tmp_folder, config_folder=config_folder)
+
+
+def print_result(result: Dict, verbose: bool = True):
+    """
+    Affiche un résultat d'opération de manière formatée.
+    
+    Args:
+        result: Dictionnaire de résultat
+        verbose: Si True, affiche tous les détails
+    """
+    if result["success"]:
+        print(f"✅ SUCCÈS: {result.get('message', 'Opération réussie')}")
+        if verbose and result.get("data"):
+            print(f"Données: {result['data']}")
+    else:
+        print(f"❌ ÉCHEC: {result.get('error', 'Erreur inconnue')}")
+
+
+# ============================================================================
+# EXEMPLE D'UTILISATION
+# ============================================================================
+
+if __name__ == "__main__":
+    # Création de l'instance
+    ops = RubiksOperations()
+    
+    # Exemple 1: Vérifier le statut
+    print("=== STATUT DE CALIBRATION ===")
+    status = ops.get_calibration_status()
+    print_result(status)
+    
+    # Exemple 2: Traiter le cube
+    print("\n=== TRAITEMENT DU CUBE ===")
+    result = ops.process_rubiks_cube(debug="text")
+    print_result(result)
+    
+    # Exemple 3: Résoudre un cube
+    print("\n=== RÉSOLUTION ===")
+    cubestring = "UUUUUULLLURRURRFFFFFFFFFLLDDDRDDRDDRLLDLLDBBBBBBBBBURR"
+    solve_result = ops.solve_and_get_url(cubestring)
+    print_result(solve_result)
+    
+    # Exemple 4: Info système
+    print("\n=== INFORMATIONS SYSTÈME ===")
+    info = ops.get_system_info()
+    print_result(info)

@@ -1,0 +1,864 @@
+[
+  {
+    "timestamp": "2025-10-25T11:04:50.621347",
+    "operation": "Statut calibration",
+    "success": true,
+    "data": {
+      "roi_calibrated": true,
+      "roi_faces_count": 6,
+      "roi_faces": [
+        "U",
+        "D",
+        "L",
+        "R",
+        "F",
+        "B"
+      ],
+      "roi_missing_faces": [],
+      "colors_calibrated": true,
+      "colors_count": 6,
+      "colors_list": [
+        "red",
+        "orange",
+        "yellow",
+        "green",
+        "blue",
+        "white"
+      ]
+    },
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T11:05:08.301070",
+    "operation": "Traitement cube (both)",
+    "success": true,
+    "data": {
+      "singmaster": "LUULUULLBLFFURUURUFFDFFLFFLRRFDDDRRRBBDDLDDLDRRUBBBBBB",
+      "faces": {}
+    },
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T11:05:16.176678",
+    "operation": "R\u00e9solution cube",
+    "success": true,
+    "data": {
+      "solution": "F' U B",
+      "cubestring": "LUULUULLBLFFURUURUFFDFFLFFLRRFDDDRRRBBDDLDDLDRRUBBBBBB"
+    },
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T11:05:29.711961",
+    "operation": "Mode robot",
+    "success": true,
+    "data": {
+      "cubestring": [
+        "LUULUULLBLFFURUURUFFDFFLFFLRRFDDDRRRBBDDLDDLDRRUBBBBBB",
+        "F' U B"
+      ],
+      "solved": true,
+      "executed": true
+    },
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T11:12:53.736964",
+    "operation": "Statut calibration",
+    "success": true,
+    "data": {
+      "roi_calibrated": true,
+      "roi_faces_count": 6,
+      "roi_faces": [
+        "U",
+        "D",
+        "L",
+        "R",
+        "F",
+        "B"
+      ],
+      "roi_missing_faces": [],
+      "colors_calibrated": true,
+      "colors_count": 6,
+      "colors_list": [
+        "red",
+        "orange",
+        "yellow",
+        "green",
+        "blue",
+        "white"
+      ]
+    },
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T11:13:01.569583",
+    "operation": "Info syst\u00e8me",
+    "success": true,
+    "data": {
+      "tmp_folder": "tmp",
+      "config_folder": ".",
+      "roi_calibration_exists": true,
+      "color_calibration_exists": true,
+      "tmp_folder_exists": true,
+      "tmp_files_count": 86
+    },
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T11:13:27.517544",
+    "operation": "Debug couleurs",
+    "success": true,
+    "data": null,
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T11:13:34.753396",
+    "operation": "Debug vision",
+    "success": true,
+    "data": null,
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T11:13:40.452533",
+    "operation": "Test pipeline",
+    "success": true,
+    "data": null,
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T11:13:54.512234",
+    "operation": "Debug face F",
+    "success": true,
+    "data": null,
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T11:14:35.301852",
+    "operation": "Mode robot",
+    "success": true,
+    "data": {
+      "cubestring": [
+        "LUULUULLBLFFURUURUFFDFFLFFLRRFDDDRRRBBDDLDDLDRRUBBBBBB",
+        "F' U B"
+      ],
+      "solved": true,
+      "executed": true
+    },
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T11:19:32.537540",
+    "operation": "Debug vision",
+    "success": true,
+    "data": null,
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T11:19:38.275005",
+    "operation": "Debug vision",
+    "success": true,
+    "data": null,
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T11:19:56.899926",
+    "operation": "Mode robot",
+    "success": true,
+    "data": {
+      "cubestring": [
+        "LUULUULLBLFFURUURUFFDFFLFFLRRFDDDRRRBBDDLDDLDRRUBBBBBB",
+        "F' U B"
+      ],
+      "solved": true,
+      "executed": true
+    },
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T11:56:53.623562",
+    "operation": "Mode robot",
+    "success": true,
+    "data": {
+      "cubestring": [
+        "LUULUULLBLFFURUURUFFDFFLFFLRRFDDDRRRBBDDLDDLDRRUBBBBBB",
+        "F' U B"
+      ],
+      "solved": true,
+      "executed": true
+    },
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T11:57:19.753784",
+    "operation": "Info syst\u00e8me",
+    "success": true,
+    "data": {
+      "tmp_folder": "tmp",
+      "config_folder": ".",
+      "roi_calibration_exists": true,
+      "color_calibration_exists": true,
+      "tmp_folder_exists": true,
+      "tmp_files_count": 84
+    },
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T12:07:01.777330",
+    "operation": "Statut calibration",
+    "success": true,
+    "data": {
+      "roi_calibrated": true,
+      "roi_faces_count": 6,
+      "roi_faces": [
+        "U",
+        "D",
+        "L",
+        "R",
+        "F",
+        "B"
+      ],
+      "roi_missing_faces": [],
+      "colors_calibrated": true,
+      "colors_count": 6,
+      "colors_list": [
+        "red",
+        "orange",
+        "yellow",
+        "green",
+        "blue",
+        "white"
+      ]
+    },
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T12:53:04.663193",
+    "operation": "Test pipeline",
+    "success": true,
+    "data": null,
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T13:12:44.173623",
+    "operation": "Traitement cube (none)",
+    "success": true,
+    "data": {
+      "singmaster": "LUULUULLBLFFURUURUFFDFFLFFLRRFDDDRRRBBDDLDDLDRRUBBBBBB",
+      "faces": {}
+    },
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T13:18:12.562557",
+    "operation": "R\u00e9solution cube",
+    "success": true,
+    "data": {
+      "solution": "F' U B",
+      "cubestring": "LUULUULLBLFFURUURUFFDFFLFFLRRFDDDRRRBBDDLDDLDRRUBBBBBB"
+    },
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T13:18:19.631230",
+    "operation": "Test pipeline",
+    "success": true,
+    "data": null,
+    "error": null
+  },
+  {
+    "timestamp": "2025-10-25T13:36:52",
+    "operation": "Statut calibration",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T13:37:04",
+    "operation": "Diagnostic couleurs",
+    "success": true,
+    "error": null,
+    "message": "Diagnostic couleur termin\u00e9"
+  },
+  {
+    "timestamp": "2025-10-25T13:37:09",
+    "operation": "Debug vision",
+    "success": true,
+    "error": null,
+    "message": "Debug vision et rotations termin\u00e9"
+  },
+  {
+    "timestamp": "2025-10-25T13:37:18",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2025-10-25T13:37:33",
+    "operation": "Process cube (both)",
+    "success": true,
+    "error": null,
+    "message": "Code Singmaster g\u00e9n\u00e9r\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T13:37:54",
+    "operation": "Process cube (text)",
+    "success": true,
+    "error": null,
+    "message": "Code Singmaster g\u00e9n\u00e9r\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T13:37:57",
+    "operation": "Process cube (none)",
+    "success": true,
+    "error": null,
+    "message": "Code Singmaster g\u00e9n\u00e9r\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T13:38:00",
+    "operation": "API debug",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T13:38:28",
+    "operation": "Test pipeline",
+    "success": true,
+    "error": null,
+    "message": "Pipeline rapide ex\u00e9cut\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T13:38:33",
+    "operation": "Mode robot",
+    "success": true,
+    "error": null,
+    "message": "Pipeline robot termin\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T13:47:23",
+    "operation": "Test GPIO - Anneau lumineux",
+    "success": true,
+    "error": null,
+    "message": "Termin\u00e9"
+  },
+  {
+    "timestamp": "2025-10-25T13:50:59",
+    "operation": "Test GPIO - Anneau lumineux",
+    "success": true,
+    "error": null,
+    "message": "Termin\u00e9"
+  },
+  {
+    "timestamp": "2025-10-25T14:01:43",
+    "operation": "Test GPIO - Anneau lumineux",
+    "success": true,
+    "error": null,
+    "message": "Test de l\u2019anneau lumineux termin\u00e9"
+  },
+  {
+    "timestamp": "2025-10-25T14:05:17",
+    "operation": "Test GPIO - Anneau lumineux",
+    "success": false,
+    "error": "Module 'anneau_lumineux' introuvable. V\u00e9rifiez sa pr\u00e9sence dans le projet.",
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T14:06:11",
+    "operation": "Test GPIO - Anneau lumineux",
+    "success": false,
+    "error": "Module 'anneau_lumineux' introuvable. V\u00e9rifiez sa pr\u00e9sence dans le projet.",
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T14:08:20",
+    "operation": "Test GPIO - Anneau lumineux",
+    "success": false,
+    "error": "Module 'anneau_lumineux' introuvable. V\u00e9rifiez sa pr\u00e9sence dans le projet.",
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T14:09:49",
+    "operation": "Test GPIO - Anneau lumineux",
+    "success": false,
+    "error": "Module 'anneau_lumineux' introuvable. V\u00e9rifiez sa pr\u00e9sence dans le projet.",
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T14:36:23",
+    "operation": "Statut calibration",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T19:51:32",
+    "operation": "Mode robot",
+    "success": true,
+    "error": null,
+    "message": "Pipeline robot termin\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T19:51:42",
+    "operation": "Info syst\u00e8me",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T19:51:49",
+    "operation": "Info syst\u00e8me",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T19:52:07",
+    "operation": "Statut calibration",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T19:52:13",
+    "operation": "Diagnostic couleurs",
+    "success": true,
+    "error": null,
+    "message": "Diagnostic couleur termin\u00e9"
+  },
+  {
+    "timestamp": "2025-10-25T19:52:24",
+    "operation": "Process cube (both)",
+    "success": true,
+    "error": null,
+    "message": "Code Singmaster g\u00e9n\u00e9r\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T19:54:53",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2025-10-25T19:55:00",
+    "operation": "Mode robot",
+    "success": true,
+    "error": null,
+    "message": "Pipeline robot termin\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T19:55:07",
+    "operation": "Info syst\u00e8me",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T19:55:22",
+    "operation": "Statut calibration",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T20:31:04",
+    "operation": "Statut calibration",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T20:31:11",
+    "operation": "Diagnostic couleurs",
+    "success": true,
+    "error": null,
+    "message": "Diagnostic couleur termin\u00e9"
+  },
+  {
+    "timestamp": "2025-10-25T20:31:19",
+    "operation": "Process cube (none)",
+    "success": true,
+    "error": null,
+    "message": "Code Singmaster g\u00e9n\u00e9r\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T20:31:32",
+    "operation": "Test pipeline",
+    "success": true,
+    "error": null,
+    "message": "Pipeline rapide ex\u00e9cut\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T20:31:39",
+    "operation": "Mode robot",
+    "success": true,
+    "error": null,
+    "message": "Pipeline robot termin\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T20:31:47",
+    "operation": "Info syst\u00e8me",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T21:05:37",
+    "operation": "Info syst\u00e8me",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T21:05:59",
+    "operation": "Statut calibration",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T21:06:14",
+    "operation": "Capture images",
+    "success": true,
+    "error": null,
+    "message": "Images captur\u00e9es dans captures"
+  },
+  {
+    "timestamp": "2025-10-25T21:06:32",
+    "operation": "Mode robot",
+    "success": true,
+    "error": null,
+    "message": "Pipeline robot termin\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T21:06:35",
+    "operation": "Test pipeline",
+    "success": true,
+    "error": null,
+    "message": "Pipeline rapide ex\u00e9cut\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T21:06:53",
+    "operation": "Info syst\u00e8me",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T21:08:22",
+    "operation": "Statut calibration",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T21:08:50",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2025-10-25T21:09:15",
+    "operation": "Nettoyage fichiers",
+    "success": true,
+    "error": null,
+    "message": "81 fichier(s) \u00e0 supprimer"
+  },
+  {
+    "timestamp": "2025-10-25T21:27:40",
+    "operation": "Nettoyage fichiers",
+    "success": true,
+    "error": null,
+    "message": "81 fichier(s) \u00e0 supprimer"
+  },
+  {
+    "timestamp": "2025-10-25T21:27:54",
+    "operation": "Info syst\u00e8me",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T21:28:03",
+    "operation": "Statut calibration",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T21:28:19",
+    "operation": "Mode robot",
+    "success": true,
+    "error": null,
+    "message": "Pipeline robot termin\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T21:28:34",
+    "operation": "Test pipeline",
+    "success": true,
+    "error": null,
+    "message": "Pipeline rapide ex\u00e9cut\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T21:29:02",
+    "operation": "Process cube (both)",
+    "success": true,
+    "error": null,
+    "message": "Code Singmaster g\u00e9n\u00e9r\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T21:29:07",
+    "operation": "Process cube (text)",
+    "success": true,
+    "error": null,
+    "message": "Code Singmaster g\u00e9n\u00e9r\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T21:29:10",
+    "operation": "Process cube (none)",
+    "success": true,
+    "error": null,
+    "message": "Code Singmaster g\u00e9n\u00e9r\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T21:29:15",
+    "operation": "API debug",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T21:36:26",
+    "operation": "Statut calibration",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T21:37:04",
+    "operation": "Calib couleurs",
+    "success": true,
+    "error": null,
+    "message": "Calibration des couleurs termin\u00e9e"
+  },
+  {
+    "timestamp": "2025-10-25T21:37:27",
+    "operation": "Capture images",
+    "success": true,
+    "error": null,
+    "message": "Images captur\u00e9es dans captures"
+  },
+  {
+    "timestamp": "2025-10-25T21:37:31",
+    "operation": "Diagnostic couleurs",
+    "success": true,
+    "error": null,
+    "message": "Diagnostic couleur termin\u00e9"
+  },
+  {
+    "timestamp": "2025-10-25T21:37:34",
+    "operation": "Debug vision",
+    "success": true,
+    "error": null,
+    "message": "Debug vision et rotations termin\u00e9"
+  },
+  {
+    "timestamp": "2025-10-25T21:37:41",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2025-10-25T21:38:01",
+    "operation": "Process cube (both)",
+    "success": true,
+    "error": null,
+    "message": "Code Singmaster g\u00e9n\u00e9r\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T21:38:03",
+    "operation": "Process cube (text)",
+    "success": true,
+    "error": null,
+    "message": "Code Singmaster g\u00e9n\u00e9r\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T21:38:08",
+    "operation": "Process cube (none)",
+    "success": true,
+    "error": null,
+    "message": "Code Singmaster g\u00e9n\u00e9r\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T21:38:12",
+    "operation": "API debug",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T21:38:31",
+    "operation": "Test pipeline",
+    "success": true,
+    "error": null,
+    "message": "Pipeline rapide ex\u00e9cut\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T21:38:37",
+    "operation": "Mode robot",
+    "success": true,
+    "error": null,
+    "message": "Pipeline robot termin\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-25T21:38:41",
+    "operation": "Nettoyage fichiers",
+    "success": true,
+    "error": null,
+    "message": "79 fichier(s) \u00e0 supprimer"
+  },
+  {
+    "timestamp": "2025-10-25T21:38:45",
+    "operation": "Nettoyage fichiers",
+    "success": true,
+    "error": null,
+    "message": "79 fichier(s) \u00e0 supprimer"
+  },
+  {
+    "timestamp": "2025-10-25T21:38:48",
+    "operation": "Nettoyage fichiers",
+    "success": true,
+    "error": null,
+    "message": "Aucun fichier temporaire \u00e0 supprimer"
+  },
+  {
+    "timestamp": "2025-10-25T21:38:59",
+    "operation": "Info syst\u00e8me",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-25T23:49:41",
+    "operation": "Calib couleurs",
+    "success": true,
+    "error": null,
+    "message": "Calibration des couleurs termin\u00e9e"
+  },
+  {
+    "timestamp": "2025-10-26T12:43:05",
+    "operation": "Statut calibration",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-26T12:43:09",
+    "operation": "Info syst\u00e8me",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-26T12:43:14",
+    "operation": "Nettoyage fichiers",
+    "success": true,
+    "error": null,
+    "message": "78 fichier(s) \u00e0 supprimer"
+  },
+  {
+    "timestamp": "2025-10-26T13:11:04",
+    "operation": "Statut calibration",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-26T14:21:18",
+    "operation": "Statut calibration",
+    "success": true,
+    "error": null,
+    "message": null
+  },
+  {
+    "timestamp": "2025-10-26T14:21:25",
+    "operation": "Diagnostic couleurs",
+    "success": true,
+    "error": null,
+    "message": "Diagnostic couleur termin\u00e9"
+  },
+  {
+    "timestamp": "2025-10-26T14:21:40",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2025-10-26T14:21:44",
+    "operation": "Nettoyage fichiers",
+    "success": true,
+    "error": null,
+    "message": "79 fichier(s) \u00e0 supprimer"
+  },
+  {
+    "timestamp": "2025-10-28T21:11:46",
+    "operation": "Process cube (none)",
+    "success": true,
+    "error": null,
+    "message": "Code Singmaster g\u00e9n\u00e9r\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-10-28T21:11:57",
+    "operation": "Mode robot",
+    "success": true,
+    "error": null,
+    "message": "Pipeline robot termin\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-11-09T15:23:16",
+    "operation": "Capture images",
+    "success": true,
+    "error": null,
+    "message": "Images captur\u00e9es dans captures"
+  },
+  {
+    "timestamp": "2025-11-09T15:29:14",
+    "operation": "Test pipeline",
+    "success": true,
+    "error": null,
+    "message": "Pipeline rapide ex\u00e9cut\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-11-09T15:29:25",
+    "operation": "Process cube (none)",
+    "success": true,
+    "error": null,
+    "message": "Code Singmaster g\u00e9n\u00e9r\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-11-09T15:29:38",
+    "operation": "Mode robot",
+    "success": true,
+    "error": null,
+    "message": "Pipeline robot termin\u00e9 avec succ\u00e8s"
+  },
+  {
+    "timestamp": "2025-11-09T15:33:38",
+    "operation": "Nettoyage fichiers",
+    "success": true,
+    "error": null,
+    "message": "78 fichier(s) \u00e0 supprimer"
+  },
+  {
+    "timestamp": "2025-11-09T15:33:45",
+    "operation": "Nettoyage fichiers",
+    "success": true,
+    "error": null,
+    "message": "Aucun fichier temporaire \u00e0 supprimer"
+  }
+]
