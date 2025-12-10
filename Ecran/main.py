@@ -7,6 +7,10 @@ import time
 GPIO_DC = 25
 GPIO_RST = 24
 
+# Style
+PRIMARY_COLOR = (10, 14, 39)
+SECONDARY_COLOR = (255, 255, 255)
+
 class RubikGUI:
     def __init__(self):
         self.serial = spi(port=0, device=0, gpio_DC=GPIO_DC, gpio_RST=GPIO_RST)
@@ -16,18 +20,18 @@ class RubikGUI:
         self.render_home_screen()
     
     def render_home_screen(self):
-        img = Image.new('RGB', self.device.size, color=(255, 255, 255))
+        img = Image.new('RGB', self.device.size, color=SECONDARY_COLOR)
         draw = ImageDraw.Draw(img)
         
         # En-tête
-        draw.rectangle([(0, 0), (self.device.width, 20)], fill=(0, 0, 0))
-        draw.text((10, 4), "RUBIK", fill=(255, 255, 255), font=self.font_small)
+        draw.rectangle([(0, 0), (self.device.width, 20)], fill=PRIMARY_COLOR)
+        draw.text((10, 4), "RUBIK", fill=SECONDARY_COLOR, font=self.font_small)
         
         # HEURE HAUT DROITE
         now = datetime.now().strftime("%H:%M")
         bbox = draw.textbbox((0, 0), now, font=self.font_small)
         text_width = bbox[2] - bbox[0]
-        draw.text((self.device.width - text_width - 5, 4), now, fill=(255, 255, 255), font=self.font_small)
+        draw.text((self.device.width - text_width - 5, 4), now, fill=SECONDARY_COLOR, font=self.font_small)
         
         self.device.display(img)
 
