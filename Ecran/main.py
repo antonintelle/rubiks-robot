@@ -1,6 +1,7 @@
 from luma.core.interface.serial import spi
 from luma.lcd.device import st7735
 from PIL import Image, ImageDraw, ImageFont
+from datetime import datetime
 import time
 
 GPIO_DC = 25
@@ -21,6 +22,12 @@ class RubikGUI:
         # En-tête
         draw.rectangle([(0, 0), (self.device.width, 20)], fill=(0, 0, 0))
         draw.text((10, 4), "RUBIK", fill=(255, 255, 255), font=self.font_small)
+        
+        # HEURE HAUT DROITE
+        now = datetime.now().strftime("%H:%M")
+        bbox = draw.textbbox((0, 0), now, font=self.font_small)
+        text_width = bbox[2] - bbox[0]
+        draw.text((self.device.width - text_width - 5, 4), now, fill=(255, 255, 255), font=self.font_small)
         
         self.device.display(img)
 
