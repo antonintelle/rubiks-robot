@@ -25,7 +25,7 @@ class RubikGUI:
         
         # En-tête
         draw.rectangle([(0, 0), (self.device.width, 20)], fill=PRIMARY_COLOR)
-        draw.text((10, 4), "RUBIK", fill=SECONDARY_COLOR, font=self.font_small)
+        draw.text((10, 4), "Home", fill=SECONDARY_COLOR, font=self.font_small)
         
         # HEURE HAUT DROITE
         now = datetime.now().strftime("%H:%M")
