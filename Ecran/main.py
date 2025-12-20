@@ -48,18 +48,31 @@ class RubikGUI:
         return (x, y)
     
     def render_home_screen(self):
-        img = Image.new('RGB', self.device.size, color=SECONDARY_COLOR)
+        img = Image.new('RGB', self.device.size, color=(255, 255, 255))
         draw = ImageDraw.Draw(img)
         
-        # En-tête
-        draw.rectangle([(0, 0), (self.device.width, 20)], fill=PRIMARY_COLOR)
-        draw.text((10, 4), "Home", fill=SECONDARY_COLOR, font=self.font_small)
+        # Header
+        header_height = 25
+        draw.rectangle([(0, 0), (self.device.width, header_height)], fill=(10, 14, 39))
         
-        # HEURE HAUT DROITE
+        # Home
+        x, y = self.get_position('lu', margin=5)
+        draw.text((x, y), "Home", fill=(255, 255, 255), font=self.font_small)
+
+        # Heure
         now = datetime.now().strftime("%H:%M")
         bbox = draw.textbbox((0, 0), now, font=self.font_small)
-        text_width = bbox[2] - bbox[0]
-        draw.text((self.device.width - text_width - 5, 4), now, fill=SECONDARY_COLOR, font=self.font_small)
+
+        text_w = bbox[2] - bbox[0]
+        text_h = bbox[3] - bbox[1]
+        x, y = self.get_position('ru', obj_size=(text_w, text_h), margin=5)
+        draw.text((x, y), now, fill=(0, 200, 160), font=self.font_small)
+        
+        # POWER SYMBOL
+        power_icon = Image.open('icons/power-btn.png').convert("RGBA")
+        power_icon = power_icon.resize((16, 16))
+        x, y = self.get_position('ld', obj_size=(16, 16), margin=5)
+        img.paste(power_icon, (x, y), power_icon)
         
         self.device.display(img)
 
