@@ -73,6 +73,12 @@ class RubikGUI:
         power_icon = power_icon.resize((16, 16))
         x, y = self.get_position('ld', obj_size=(16, 16), margin=5)
         img.paste(power_icon, (x, y), power_icon)
+
+        # SETTINGS
+        settings_icon = Image.open('icons/settings-btn.png').convert("RGBA")
+        settings_icon = settings_icon.resize((16, 16))
+        x, y = self.get_position('rd', obj_size=(16, 16), margin=5)
+        img.paste(settings_icon, (x, y), settings_icon)
         
         self.device.display(img)
 
