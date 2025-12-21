@@ -1,6 +1,8 @@
-#!/usr/bin/python3
 from screens.home import HomeScreen
 from screens.debug import DebugScreen
+
+from tools.network import NetworkTools
+from tools.system import SystemTools
 
 import signal
 import sys
@@ -24,6 +26,10 @@ class RubikGUI:
         self._stop_event = threading.Event()
         #self.font_small = ImageFont.load_default()
         self.font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", size=11)
+        
+        self.net = NetworkTools()
+        self.sys = SystemTools()
+        
         self.current_screen_name = "debug"
         self.screens = {
             "home":  HomeScreen(self),
