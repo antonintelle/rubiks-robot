@@ -1,5 +1,5 @@
-from socket import socket
-from subprocess import run
+import socket
+import subprocess
 
 class NetworkTools:
     def __init__(self, wifi_iface: str = "wlan0"):

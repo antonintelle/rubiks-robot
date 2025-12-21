@@ -9,14 +9,14 @@ class HomeScreen(Screen):
         # icônes
         try:
             power_icon = Image.open('icons/power-btn.png').convert("RGBA").resize((16, 16))
-            x, y = self.gui.get_position('ld', obj_size=(16, 16), margin=5)
+            x, y = self.get_position('ld', obj_size=(16, 16), margin=5)
             draw._image.paste(power_icon, (x, y), power_icon)
         except FileNotFoundError:
             pass
 
         try:
             settings_icon = Image.open('icons/settings-btn.png').convert("RGBA").resize((16, 16))
-            x, y = self.gui.get_position('rd', obj_size=(16, 16), margin=5)
+            x, y = self.get_position('rd', obj_size=(16, 16), margin=5)
             draw._image.paste(settings_icon, (x, y), settings_icon)
         except FileNotFoundError:
             pass

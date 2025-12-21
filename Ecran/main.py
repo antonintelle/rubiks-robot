@@ -51,36 +51,6 @@ class RubikGUI:
         img = screen.render()
         self.device.display(img)
 
-    def get_position(self, pos :str, obj_size: tuple=(0,0), margin: int=5) -> tuple:
-        """
-        Donne la position d'un objet sur l'écran.
-        
-        Args:
-            pos: String 2 caractères [l/r/c][u/d/c]
-                - 1er char: 'l'=left, 'r'=right, 'c'=center (horizontal)
-                - 2e char: 'u'=up, 'd'=down, 'c'=center (vertical)
-            obj_size: Taille de l'objet (pour ajuster x et y)
-            margin: Marge depuis les bords
-        
-        Returns:
-            (x, y) - Coin supérieur gauche de l'objet
-        """
-        if len(pos) != 2:
-            raise ValueError("pos doit avoir 2 caractères (ex: 'lr', 'dc')")
-        
-        pos_h, pos_v = pos.lower()
-        obj_w, obj_h = obj_size
-
-        x = margin if pos_h == 'l' \
-            else (self.device.width - obj_w)//2 if pos_h == 'c' \
-            else self.device.width - margin - obj_w
-
-        y = margin if pos_v == 'u' \
-            else (self.device.height - obj_h)//2 if pos_v == 'c' \
-            else self.device.height-margin - obj_h
-        
-        return (x, y)
-
     def cleanup(self):
         """Nettoyage GPIO/écran"""
         print("Nettoyage LCD/GPIO...")

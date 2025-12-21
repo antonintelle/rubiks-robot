@@ -14,5 +14,5 @@ class DebugScreen(Screen):
         txt =  f"SSID: {ssid}" if ssid else "SSID: /"
         txt += f"\nIP:   {ip}"   if ip   else "IP:   /"
 
-        x, y = self.gui.get_position('lu', margin=5)
+        x, y = self.get_position('lu', margin=5)
         draw.text((x, y + header_h), txt, fill=(255, 0, 0), font=self.gui.font_small)

@@ -1,5 +1,5 @@
-from subprocess import run
-from psutil import users
+import subprocess
+import psutil
 
 class SystemTools:
     def shutdown(self):
