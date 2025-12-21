@@ -1,10 +1,18 @@
 #!/usr/bin/python3
 
+import signal
+import sys
+import threading
+
 from luma.core.interface.serial import spi
 from luma.lcd.device import st7735
 from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 import time
+
+import subprocess
+import socket
+import errno
 
 GPIO_DC = 25
 GPIO_RST = 24
@@ -13,10 +21,16 @@ class RubikGUI:
     def __init__(self):
         self.serial = spi(port=0, device=0, gpio_DC=GPIO_DC, gpio_RST=GPIO_RST)
         self.device = st7735(self.serial)
-        self.running = True
+        self._stop_event = threading.Event()
         self.font_small = ImageFont.load_default()
         self.render_home_screen()
     
+    def signal_handler(self, sig, frame):
+        """Gère SIGTERM de systemd"""
+        print("Arrêt demandé (SIGTERM/SIGINT)...")
+        # Arrête la boucle proprement
+        self._stop_event.set()
+
     def get_position(self, pos :str, obj_size: tuple=(0,0), margin: int=5) -> tuple:
         """
         Donne la position d'un objet sur l'écran.
@@ -67,29 +81,53 @@ class RubikGUI:
         text_h = bbox[3] - bbox[1]
         x, y = self.get_position('ru', obj_size=(text_w, text_h), margin=5)
         draw.text((x, y), now, fill=(0, 200, 160), font=self.font_small)
-        
+        try:
         # POWER SYMBOL
-        power_icon = Image.open('icons/power-btn.png').convert("RGBA")
-        power_icon = power_icon.resize((16, 16))
-        x, y = self.get_position('ld', obj_size=(16, 16), margin=5)
-        img.paste(power_icon, (x, y), power_icon)
+            power_icon = Image.open('icons/power-btn.png').convert("RGBA")
+            power_icon = power_icon.resize((16, 16))
+            x, y = self.get_position('ld', obj_size=(16, 16), margin=5)
+            img.paste(power_icon, (x, y), power_icon)
+        finally:
+            pass
 
-        # SETTINGS
-        settings_icon = Image.open('icons/settings-btn.png').convert("RGBA")
-        settings_icon = settings_icon.resize((16, 16))
-        x, y = self.get_position('rd', obj_size=(16, 16), margin=5)
-        img.paste(settings_icon, (x, y), settings_icon)
-        
+        try:
+            # SETTINGS
+            settings_icon = Image.open('icons/settings-btn.png').convert("RGBA")
+            settings_icon = settings_icon.resize((16, 16))
+            x, y = self.get_position('rd', obj_size=(16, 16), margin=5)
+            img.paste(settings_icon, (x, y), settings_icon)
+        finally:
+            pass
+
         self.device.display(img)
 
+    def cleanup(self):
+        """Nettoyage GPIO/écran"""
+        print("Nettoyage LCD/GPIO...")
+        try:
+            self.device.clear()
+        except:
+            pass
+        self.serial.cleanup()
+
     def run(self):
-        while self.running:
-            time.sleep(0.1)
-            self.render_home_screen()
+        signal.signal(signal.SIGTERM, self.signal_handler)
+        signal.signal(signal.SIGINT, self.signal_handler)
+        
+        try:
+            while not self._stop_event.is_set():
+                time.sleep(0.1)
+                self.render_home_screen()
+        finally:
+            self.cleanup()
 
 if __name__ == "__main__":
+    app = None
     try:
         app = RubikGUI()
         app.run()
     except KeyboardInterrupt:
         pass
+    finally:
+        if app:
+            app.cleanup()
