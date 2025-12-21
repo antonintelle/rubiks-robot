@@ -1,4 +1,3 @@
-# screens/home.py
 from .base import Screen, HEADER_HEIGHT
 from PIL import Image
 

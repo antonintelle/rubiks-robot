@@ -1,4 +1,3 @@
-# screens/base.py
 from abc import ABC, abstractmethod
 from datetime import datetime
 from PIL import Image, ImageDraw
