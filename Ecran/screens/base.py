@@ -1,39 +1,23 @@
+# base.py
 from abc import ABC, abstractmethod
 from datetime import datetime
-from PIL import Image
-import pygame
+from PIL import Image, ImageDraw, ImageFont
 
 HEADER_HEIGHT = 15
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+
+DEJAVU_PATH = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
 class Screen(ABC):
     def __init__(self, gui, title: str):
         self.gui = gui
         self.title = title
+        # fonte par défaut (Pillow)
+        self.default_font = self.gui.font_small  # déjà créé dans RubikGUI [file:24]
 
-        pygame.init()
-        w, h = self.gui.device.width, self.gui.device.height
-        self.surface = pygame.Surface((w, h))
-        try:
-            self.font_small = pygame.font.Font(
-                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 11
-            )
-        except:
-            self.font_small = pygame.font.Font(None, 11) 
-
-    def get_position(self, pos :str, obj_size: tuple=(0,0), margin: int=5) -> tuple:
-        """
-        Donne la position d'un objet sur l'écran.
-        
-        Args:
-            pos: String 2 caractères [l/r/c][u/d/c]
-                - 1er char: 'l'=left, 'r'=right, 'c'=center (horizontal)
-                - 2e char: 'u'=up, 'd'=down, 'c'=center (vertical)
-            obj_size: Taille de l'objet (pour ajuster x et y)
-            margin: Marge depuis les bords
-        
-        Returns:
-            (x, y) - Coin supérieur gauche de l'objet
-        """
+    # ---------- POSITION ----------
+    def get_position(self, pos: str, obj_size: tuple=(0,0), margin: int=5) -> tuple:
         if len(pos) != 2:
             raise ValueError("pos doit avoir 2 caractères (ex: 'lr', 'dc')")
         
@@ -46,37 +30,130 @@ class Screen(ABC):
 
         y = margin if pos_v == 'u' \
             else (self.gui.device.height - obj_h)//2 if pos_v == 'c' \
-            else self.gui.device.height-margin - obj_h
-        
+            else self.gui.device.height - margin - obj_h
         return (x, y)
 
+    # ---------- HELPERS DE DESSIN ----------
+
+    def _get_font(self, font_path=None, size=11):
+        """Retourne une fonte Pillow (ou la fonte par défaut)."""
+        if font_path is None:
+            return self.default_font
+        try:
+            return ImageFont.truetype(font_path, size=size)
+        except OSError:
+            return self.default_font
+
+    def set_title(self, draw: ImageDraw.ImageDraw, text: str,
+                  color=WHITE, font_path=None, size=11):
+        """Change le titre affiché dans la barre haute."""
+        self.title = text
+        font = self._get_font(font_path, size)
+        # Fond bandeau
+        draw.rectangle(
+            [(0, 0), (self.gui.device.width, HEADER_HEIGHT)],
+            fill=(10, 14, 39)
+        )
+        # Titre
+        x, y = self.get_position('lu', margin=1)
+        draw.text((x, y), self.title, fill=color, font=font)
+
+    def write_text(self, draw: ImageDraw.ImageDraw,
+               x1: int, y1: int, x2: int, y2: int,
+               text: str, color=BLACK, font_path=None, size=11,
+               align: str = "left", line_spacing: int = 0):
+        """
+        Affiche du texte dans le rectangle [x1,y1,x2,y2].
+        - align: 'left' (défaut), 'center', 'right'
+        - line_spacing: pixels ajoutés entre deux lignes
+        Dessine un cadre noir autour de la zone (debug).
+        """
+        font = self._get_font(font_path, size)
+
+        # DEBUG : rectangle de la zone
+        draw.rectangle([(x1, y1), (x2, y2)], outline=(0, 0, 0), width=1)
+
+        max_width = x2 - x1
+        lines = []
+
+        # Découpe simple par mots
+        for paragraph in text.split("\n"):
+            words = paragraph.split(" ")
+            current = ""
+            for w in words:
+                test = (current + " " + w).strip()
+                bbox = draw.textbbox((0, 0), test, font=font)
+                if bbox[2] - bbox[0] <= max_width:
+                    current = test
+                else:
+                    if current:
+                        lines.append(current)
+                    current = w
+            if current:
+                lines.append(current)
+
+        # Dessin ligne par ligne
+        y = y1
+        for line in lines:
+            bbox = draw.textbbox((0, 0), line, font=font)
+            w = bbox[2] - bbox[0]
+            h = bbox[3] - bbox[1]
+
+            if y + h > y2:
+                break  # plus de place
+
+            if align == "center":
+                x = x1 + (max_width - w)//2
+            elif align == "right":
+                x = x2 - w
+            else:  # 'left'
+                x = x1
+
+            draw.text((x, y), line, fill=color, font=font)
+            y += h + line_spacing
+
+    def write_image(self, draw: ImageDraw.ImageDraw,
+                    x1: int, y1: int, path: str, size: tuple=None):
+        """Affiche une image au point (x1,y1), optionnellement redimensionnée."""
+        try:
+            img = Image.open(path).convert("RGBA")
+        except FileNotFoundError:
+            return
+
+        if size is not None:
+            img = img.resize(size)
+
+        draw._image.paste(img, (x1, y1), img)
+
+    # ---------- RENDU GLOBAL ----------
+
     def render(self):
-        # fond + header, texte, etc.
-        self.surface.fill((255, 255, 255))
-        pygame.draw.rect(self.surface, (10, 14, 39),
-                        (0, 0, self.gui.device.width, HEADER_HEIGHT))
+        # fond + dessin générique
+        img = Image.new('RGB', self.gui.device.size, color=(255, 255, 255))
+        draw = ImageDraw.Draw(img)
 
-        title_surf = self.font_small.render(self.title, True, (255, 255, 255))
-        self.surface.blit(title_surf,
-                        self.get_position('lu', title_surf.get_size(), margin=1))
+        # bandeau du haut
+        draw.rectangle(
+            [(0, 0), (self.gui.device.width, HEADER_HEIGHT)],
+            fill=(10, 14, 39)
+        )
 
-        from datetime import datetime
+        # titre
+        x, y = self.get_position('lu', margin=1)
+        draw.text((x, y), self.title, fill=(255, 255, 255), font=self.gui.font_small)
+
+        # heure
         now = datetime.now().strftime("%H:%M")
-        time_surf = self.font_small.render(now, True, (0, 200, 160))
-        self.surface.blit(time_surf,
-                        self.get_position('ru', time_surf.get_size(), margin=1))
+        bbox = draw.textbbox((0, 0), now, font=self.gui.font_small)
+        w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        x, y = self.get_position('ru', obj_size=(w, h), margin=1)
+        draw.text((x, y), now, fill=(0, 200, 160), font=self.gui.font_small)
 
-        # contenu spécifique de l’écran (Home, Debug, etc.)
-        self.render_body()
+        # contenu spécifique
+        self.render_body(draw, HEADER_HEIGHT)
 
-        # conversion surface → PIL pour Luma
-        w, h = self.gui.device.width, self.gui.device.height
-        data = pygame.image.tostring(self.surface, "RGB")
-        img = Image.frombytes("RGB", (w, h), data)
-        if img.mode != self.gui.device.mode:
-            img = img.convert(self.gui.device.mode)
         return img
 
     @abstractmethod
-    def render_body(self):
+    def render_body(self, draw: ImageDraw.ImageDraw, header_h: int):
         ...
