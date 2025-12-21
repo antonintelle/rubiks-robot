@@ -1,22 +1,31 @@
+import pygame
 from .base import Screen, HEADER_HEIGHT
-from PIL import Image
 
 class HomeScreen(Screen):
     def __init__(self, gui):
         super().__init__(gui, title="Home")
-
-    def render_body(self, draw, header_h: int):
-        # icônes
+        # Précharger les icônes sans convert_alpha() (pas de display Pygame) [file:22]
         try:
-            power_icon = Image.open('icons/power-btn.png').convert("RGBA").resize((16, 16))
-            x, y = self.get_position('ld', obj_size=(16, 16), margin=5)
-            draw._image.paste(power_icon, (x, y), power_icon)
+            self.power_icon = pygame.image.load('icons/power-btn.png')  # .convert_alpha() supprimé
+            self.power_icon = pygame.transform.smoothscale(self.power_icon, (16, 16))
         except FileNotFoundError:
-            pass
+            self.power_icon = None
 
         try:
-            settings_icon = Image.open('icons/settings-btn.png').convert("RGBA").resize((16, 16))
-            x, y = self.get_position('rd', obj_size=(16, 16), margin=5)
-            draw._image.paste(settings_icon, (x, y), settings_icon)
+            self.settings_icon = pygame.image.load('icons/settings-btn.png')  # idem
+            self.settings_icon = pygame.transform.smoothscale(self.settings_icon, (16, 16))
         except FileNotFoundError:
-            pass
+            self.settings_icon = None
+
+    def render_body(self):
+        # Icône power en bas à gauche
+        if self.power_icon is not None:
+            w, h = self.power_icon.get_size()
+            x, y = self.get_position('ld', obj_size=(w, h), margin=5)
+            self.surface.blit(self.power_icon, (x, y))
+
+        # Icône settings en bas à droite
+        if self.settings_icon is not None:
+            w, h = self.settings_icon.get_size()
+            x, y = self.get_position('rd', obj_size=(w, h), margin=5)
+            self.surface.blit(self.settings_icon, (x, y))

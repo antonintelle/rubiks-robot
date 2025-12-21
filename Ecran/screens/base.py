@@ -1,13 +1,24 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from PIL import Image, ImageDraw
+from PIL import Image
+import pygame
 
 HEADER_HEIGHT = 15
 
 class Screen(ABC):
     def __init__(self, gui, title: str):
-        self.gui = gui          # accès à device, font, get_position, etc.
+        self.gui = gui
         self.title = title
+
+        pygame.init()
+        w, h = self.gui.device.width, self.gui.device.height
+        self.surface = pygame.Surface((w, h))
+        try:
+            self.font_small = pygame.font.Font(
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 11
+            )
+        except:
+            self.font_small = pygame.font.Font(None, 11) 
 
     def get_position(self, pos :str, obj_size: tuple=(0,0), margin: int=5) -> tuple:
         """
@@ -40,32 +51,32 @@ class Screen(ABC):
         return (x, y)
 
     def render(self):
-        # fond + dessin générique
-        img = Image.new('RGB', self.gui.device.size, color=(255, 255, 255))
-        draw = ImageDraw.Draw(img)
+        # fond + header, texte, etc.
+        self.surface.fill((255, 255, 255))
+        pygame.draw.rect(self.surface, (10, 14, 39),
+                        (0, 0, self.gui.device.width, HEADER_HEIGHT))
 
-        # bandeau du haut
-        draw.rectangle(
-            [(0, 0), (self.gui.device.width, HEADER_HEIGHT)],
-            fill=(10, 14, 39)
-        )
+        title_surf = self.font_small.render(self.title, True, (255, 255, 255))
+        self.surface.blit(title_surf,
+                        self.get_position('lu', title_surf.get_size(), margin=1))
 
-        # titre
-        x, y = self.get_position('lu', margin=1)
-        draw.text((x, y), self.title, fill=(255, 255, 255), font=self.gui.font_small)
-
-        # heure
+        from datetime import datetime
         now = datetime.now().strftime("%H:%M")
-        bbox = draw.textbbox((0, 0), now, font=self.gui.font_small)
-        w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        x, y = self.get_position('ru', obj_size=(w, h), margin=1)
-        draw.text((x, y), now, fill=(0, 200, 160), font=self.gui.font_small)
+        time_surf = self.font_small.render(now, True, (0, 200, 160))
+        self.surface.blit(time_surf,
+                        self.get_position('ru', time_surf.get_size(), margin=1))
 
-        # contenu spécifique de l’écran
-        self.render_body(draw, HEADER_HEIGHT)
+        # contenu spécifique de l’écran (Home, Debug, etc.)
+        self.render_body()
 
+        # conversion surface → PIL pour Luma
+        w, h = self.gui.device.width, self.gui.device.height
+        data = pygame.image.tostring(self.surface, "RGB")
+        img = Image.frombytes("RGB", (w, h), data)
+        if img.mode != self.gui.device.mode:
+            img = img.convert(self.gui.device.mode)
         return img
 
     @abstractmethod
-    def render_body(self, draw: ImageDraw.ImageDraw, header_h: int):
+    def render_body(self):
         ...
