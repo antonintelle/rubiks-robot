@@ -22,7 +22,8 @@ class RubikGUI:
         self.serial = spi(port=0, device=0, gpio_DC=GPIO_DC, gpio_RST=GPIO_RST)
         self.device = st7735(self.serial)
         self._stop_event = threading.Event()
-        self.font_small = ImageFont.load_default()
+        #self.font_small = ImageFont.load_default()
+        self.font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", size=11)
         self.render_home_screen()
     
     def signal_handler(self, sig, frame):
@@ -61,6 +62,33 @@ class RubikGUI:
         
         return (x, y)
     
+    def get_wifi_ip(self) -> str:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # Utilise la route par défaut (chez toi -> wlan0)
+            s.connect(("8.8.8.8", 80))
+            return s.getsockname()[0]  # ex: "192.168.1.122"
+        except OSError:
+            return None
+        finally:
+            s.close()
+
+    def get_wifi_ssid(self) -> str | None:
+        try:
+            result = subprocess.run(
+                ["iwgetid", "-r"],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode != 0:
+                # Pas connecté ou iwgetid indisponible
+                return None
+            ssid = result.stdout.strip()
+            return ssid or None
+        except FileNotFoundError:
+            # iwgetid n'existe pas
+            return None
+
     def render_home_screen(self):
         img = Image.new('RGB', self.device.size, color=(255, 255, 255))
         draw = ImageDraw.Draw(img)
@@ -98,6 +126,16 @@ class RubikGUI:
             img.paste(settings_icon, (x, y), settings_icon)
         finally:
             pass
+        
+        # DEBUG
+        ssid = self.get_wifi_ssid()
+        txt = f"SSID: {ssid}" if ssid is not None else "SSID: /"
+
+        ip = self.get_wifi_ip()
+        txt += f"\nIP: {ip}" if ssid is not None else "IP: /"
+        
+        x, y = self.get_position('lu', margin=5)
+        draw.text((x, y + header_height), txt, fill=(255, 0, 0), font=self.font_small)
 
         self.device.display(img)
 
