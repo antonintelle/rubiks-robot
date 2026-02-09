@@ -64,9 +64,32 @@ def get_calibration_stats() -> Optional[Dict[str, Any]]:
     if roi is not None:
         faces = list(roi.keys())
         widths, heights = [], []
-        for f, (x1, y1, x2, y2) in roi.items():
-            widths.append(x2 - x1)
-            heights.append(y2 - y1)
+
+        for f, v in roi.items():
+            # v peut être bbox (x1,y1,x2,y2) ou quad ((x,y)*4)
+            if isinstance(v, (list, tuple)) and len(v) == 4 and all(not isinstance(x, (list, tuple)) for x in v):
+                # BBOX
+                x1, y1, x2, y2 = map(float, v)
+                widths.append(x2 - x1)
+                heights.append(y2 - y1)
+
+            elif isinstance(v, (list, tuple)) and len(v) == 4 and all(isinstance(pt, (list, tuple)) and len(pt) == 2 for pt in v):
+                # QUAD (TL,TR,BR,BL)
+                pts = np.array(v, dtype=np.float32)
+                tl, tr, br, bl = pts
+
+                w1 = float(np.linalg.norm(tr - tl))
+                w2 = float(np.linalg.norm(br - bl))
+                h1 = float(np.linalg.norm(bl - tl))
+                h2 = float(np.linalg.norm(br - tr))
+
+                widths.append((w1 + w2) / 2.0)
+                heights.append((h1 + h2) / 2.0)
+
+            else:
+                # format inconnu → on ignore juste pour les stats
+                continue
+
         stats["roi"] = {
             "faces": faces,
             "faces_count": len(faces),  # ✅ clé corrigée

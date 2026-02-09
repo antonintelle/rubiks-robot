@@ -18,6 +18,7 @@
 #           c3 - Calibration des zones (ROI)
 #       [CAPTURE]
 #           i1 - Capture d'images
+#           i2 - Capture d'images avec robot
 #       [VISION]
 #           v1 - Diagnostic couleurs
 #           v2 - Debug vision et rotations
@@ -52,9 +53,12 @@
 
 import sys
 import os
+import webbrowser
+
 from colorama import init, Fore, Style
 from datetime import datetime
 from typing import Dict
+from anneau_lumineux import eteindre_force
 
 from rubiks_operations import RubiksOperations
 
@@ -171,8 +175,10 @@ class RubiksTextGUI:
         print(" c1 - Statut des calibrations")
         print(" c2 - Calibration des couleurs")
         print(" c3 - Calibration des zones (ROI)")
+        print(" c4 - Calibration des blancs")
         print(Fore.MAGENTA + "[CAPTURE]" + Style.RESET_ALL)
         print(" i1 - Capture d'images")
+        print(" i2 - Capture d'images avec robot")
         print(Fore.MAGENTA + "[VISION]" + Style.RESET_ALL)
         print(" v1 - Diagnostic couleurs")
         print(" v2 - Debug vision et rotations")
@@ -186,13 +192,14 @@ class RubiksTextGUI:
         print(" r1 - Résoudre un cube seul (chaîne)")
         print(Fore.MAGENTA + "[PIPELINE]" + Style.RESET_ALL)
         print(" p1 - Test pipeline rapide")
-        print(" p2 - Mode robot complet")
-        print(Fore.MAGENTA + "[TESTS GPIO]" + Style.RESET_ALL)
+        print(" p2 - Mode robot complet SANS mouvements")
+        print(" p3 - Mode robot complet AVEC mouvements")
+        print(Fore.MAGENTA + "[TESTS ECRAN ET LUMIERE]" + Style.RESET_ALL)
         print(" g1 - Lancer le menu de l’anneau lumineux")
-        print(Fore.MAGENTA + "[MOUVEMENTS ROBOT]" + Style.RESET_ALL)
-        print("   (vide)")
+        print(" g2 - Lancer le test écran TFT")
         print(Fore.MAGENTA + "[ROBOT]" + Style.RESET_ALL)
-        print("   (vide)")
+        print(" ro1 - Lancer le test de mouvement du robot")
+        print(" ro2 - Lancer le test de commandes singmaster avec le robot")
         print(Fore.MAGENTA + "[UTILITAIRES]" + Style.RESET_ALL)
         print(" u1 - Nettoyer fichiers temporaires")
         print(" u2 - Informations système")
@@ -202,6 +209,116 @@ class RubiksTextGUI:
     # -------------------------------------------------------------------------
     # HANDLERS
     # -------------------------------------------------------------------------
+    def handle_test_tft(self):
+        Display.section("TFT - GIF durée perso")
+
+        duration_str = Display.prompt("Durée (défaut 30) : ")
+
+        if duration_str.strip() == "":
+            duration = 30
+        else:
+            try:
+                duration = int(duration_str)
+            except ValueError:
+                Display.error("Durée invalide")
+                return
+
+        result = self.ops.test_tft(duration)
+        self.history.add(f"TFT GIF {duration}s", result)
+
+        if result["success"]:
+            Display.success(result["message"])
+        else:
+            Display.error(result["error"])
+
+    def handle_test_tft_text(self):
+        Display.section("TFT — Affichage texte")
+
+        message = Display.prompt("Texte à afficher : ")
+        if message.strip() == "":
+            Display.error("Le texte ne peut pas être vide.")
+            return
+
+        duration_str = Display.prompt("Durée (défaut 5) : ")
+        duration = 5 if duration_str.strip() == "" else int(duration_str)
+
+        result = self.ops.test_tft_text(message, duration)
+        self.history.add(f"TFT Texte: '{message}'", result)
+
+        if result["success"]:
+            Display.success(result["message"])
+        else:
+            Display.error(result["error"])
+
+    def handle_test_tft_fixed(self):
+        Display.section("TFT - GIF (30s)")
+        result = self.ops.test_tft(30)
+        self.history.add("TFT GIF 30s", result)
+        if result["success"]:
+            Display.success(result["message"])
+        else:
+            Display.error(result["error"])
+
+    def handle_tft_on(self):
+        from ecran.tft import device, Image
+        img = Image.new("RGB", (device.width, device.height), "white")
+        device.display(img)
+        Display.success("Écran allumé (blanc)")
+
+    def handle_tft_off(self):
+        from ecran.tft import device, Image
+        img = Image.new("RGB", (device.width, device.height), "black")
+        device.display(img)
+        Display.success("Écran éteint")
+
+    def handle_menu_tft(self):
+        while True:
+            Display.section("MENU TFT")
+            print("t1 - Afficher le GIF (30 sec)")
+            print("t2 - Afficher le GIF (durée personnalisée)")
+            print("t3 - Allumer l'écran (blanc)")
+            print("t4 - Éteindre l'écran (noir)")
+            print("t5 - Test rapide (5 sec)")
+            print("t6 - Afficher un texte")
+            print("q  - Retour (quitter)")
+
+            choice = Display.prompt("Choisir une option : ")
+
+            if choice == "t1":
+                self.handle_test_tft_fixed()
+            elif choice == "t2":
+                self.handle_test_tft()  # <<< ICI tu réutilises ton handler
+            elif choice == "t3":
+                self.handle_tft_on()
+            elif choice == "t4":
+                self.handle_tft_off()
+            elif choice == "t5":
+                self.ops.test_tft(5)
+            elif choice == "t6":
+                self.handle_test_tft_text()
+            elif choice == "q":
+                return
+            else:
+                Display.error("Option inconnue.")
+
+    def handle_test_robot(self):
+        Display.section("TEST DES MOTEURS")
+        result = self.ops.test_moteur()
+        self.history.add("Test moteur", result)
+        if result["success"]:
+            Display.success(result.get("message", "Test terminé"))
+        else:
+            Display.error(result.get("error", "Erreur inconnue"))
+    
+    def handle_test_mouvements_robot(self):
+        Display.section("TEST DES SEQUENCES SINGMASTER AVEC ROBOT")
+        result = self.ops.test_mouvements_robot()
+        self.history.add("Test mouvements robot", result)
+        if result["success"]:
+            Display.success(result.get("message", "Test terminé"))
+        else:
+            Display.error(result.get("error", "Erreur inconnue"))            
+
     def handle_calibration_status(self):
         Display.section("STATUT DES CALIBRATIONS")
         result = self.ops.get_calibration_status()
@@ -227,14 +344,29 @@ class RubiksTextGUI:
 
     def handle_solve_cube(self):
         Display.section("RÉSOLUTION D’UN CUBE")
-        cube = Display.prompt("Chaîne Singmaster (54 caractères)")
+        cube_defaut = "LUULUULLBLFFURUURUFFDFFLFFLRRFDDDRRRBBDDLDDLDRRUBBBBBB"
+        cube = Display.prompt(f"Chaîne Singmaster (54 caractères par défaut {cube_defaut})")
+        if len(cube) == 0:
+            cube=cube_defaut
         if len(cube) != 54:
             Display.error("Chaîne invalide")
             return
-        url = Display.prompt("Générer URL de visualisation ? (o/n)").lower() in ["o", "oui", "y"]
-        result = self.ops.solve_and_get_url(cube) if url else self.ops.solve_cube(cube)
+        url_requested = Display.prompt("Générer URL de visualisation ? (o/n)").lower() in ["o", "oui", "y"]
+        result = self.ops.solve_and_get_url(cube) if url_requested else self.ops.solve_cube(cube)
+
         self.history.add("Résolution cube", result)
-        Display.result_data(result["data"]) if result["success"] else Display.error(result["error"])
+
+        if result.get("success"):
+            Display.result_data(result.get("data"))
+
+            if url_requested:
+                url = (result.get("data") or {}).get("url")
+                if url:
+                    webbrowser.open(url)
+                else:
+                    Display.error("URL demandée mais absente du résultat (clé 'url' manquante).")
+        else:
+            Display.error(result.get("error", "Erreur inconnue"))
 
     def handle_gpio_ring(self):
         Display.section("TEST GPIO - ANNEAU LUMINEUX")
@@ -244,6 +376,10 @@ class RubiksTextGUI:
             Display.success(result.get("message", "Test terminé"))
         else:
             Display.error(result.get("error", "Erreur inconnue"))
+
+    def handle_led_off(self):
+        Display.section("FORCER LEDS OFF")
+        eteindre_force()          
 
     def handle_cleanup_files(self):
             """Gère le nettoyage des fichiers temporaires avec affichage"""
@@ -359,6 +495,17 @@ class RubiksTextGUI:
         else:
             Display.error(result.get("error", "Erreur lors de la calibration"))
 
+
+    def handle_calibrate_blancs(self):
+        """Calibration des blancs"""
+        Display.section("CALIBRATION DES BLANCS")
+        result = self.ops.calibrate_blancs()
+        self.history.add("Calib zones", result)
+        if result["success"]:
+            Display.success(result.get("message", "Calibration blancs terminée"))
+        else:
+            Display.error(result.get("error", "Erreur lors de la calibration des blancs"))            
+
     def handle_capture_images(self):
         """Capture d'images avec affichage du résultat"""
         Display.section("CAPTURE D'IMAGES")
@@ -370,6 +517,18 @@ class RubiksTextGUI:
                 Display.result_data(result["data"])
         else:
             Display.error(result.get("error", "Erreur lors de la capture"))
+
+    def handle_capture_images_robot(self):
+        """Capture d'images avec affichage du résultat + mouvements robot"""
+        Display.section("CAPTURE D'IMAGES AVEC ROBOT")
+        result = self.ops.capture_images_robot()
+        self.history.add("Capture images avec robot", result)
+        if result["success"]:
+            Display.success(result.get("message", "Capture+robot terminés"))
+            if result.get("data"):
+                Display.result_data(result["data"])
+        else:
+            Display.error(result.get("error", "Erreur lors de la capture+robot"))
 
     def handle_debug_color_mapping(self):
         """Diagnostic couleurs avec affichage du résultat"""
@@ -419,10 +578,10 @@ class RubiksTextGUI:
         else:
             Display.error(result.get("error", "Erreur lors du test"))
 
-    def handle_robot_mode(self):
+    def handle_robot_mode(self,do_solve : bool = True,do_execute : bool = False):
         """Mode robot complet avec affichage du résultat"""
         Display.section("MODE ROBOT COMPLET")
-        result = self.ops.run_robot_mode()
+        result = self.ops.run_robot_mode(do_solve,do_execute)
         self.history.add("Mode robot", result)
         if result["success"]:
             Display.success(result.get("message", "Mode robot terminé"))
@@ -443,7 +602,9 @@ class RubiksTextGUI:
                 if choice == "c1": self.handle_calibration_status()
                 elif choice == "c2": self.handle_calibrate_colors()
                 elif choice == "c3": self.handle_calibrate_zones()
+                elif choice == "c4": self.handle_calibrate_blancs()
                 elif choice == "i1": self.handle_capture_images()
+                elif choice == "i2": self.handle_capture_images_robot()
                 elif choice == "v1": self.handle_debug_color_mapping()
                 elif choice == "v2": self.handle_debug_vision()
                 elif choice == "v3": self.handle_debug_face()
@@ -453,8 +614,13 @@ class RubiksTextGUI:
                 elif choice == "k4": self.handle_api_mode()
                 elif choice == "r1": self.handle_solve_cube()
                 elif choice == "p1": self.handle_quick_pipeline_test()
-                elif choice == "p2": self.handle_robot_mode()
+                elif choice == "p2": self.handle_robot_mode(do_solve=True,do_execute=False)
+                elif choice == "p3": self.handle_robot_mode(do_solve=True,do_execute=True)
                 elif choice == "g1": self.handle_gpio_ring()
+                elif choice == "g2": self.handle_menu_tft()
+                elif choice == "g3": self.handle_led_off()
+                elif choice == "ro1": self.handle_test_robot()
+                elif choice == "ro2": self.handle_test_mouvements_robot()
                 elif choice == "u1": self.handle_cleanup_files()
                 elif choice == "u2": self.handle_system_info()
                 elif choice == "u3": self.history.show()

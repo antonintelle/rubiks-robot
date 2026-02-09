@@ -221,4 +221,4 @@ python -c "from url_convertor import convert_to_url; print(convert_to_url('R U R
 Projet pédagogique open-source  
 **© 2025 – Projet Rubik’s Cube (vision + robotique)**  
 Licence MIT  
-Contributeurs : Galdric T. & collaborateurs
+Contributeurs : Galdric T. & antonintelle

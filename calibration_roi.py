@@ -28,57 +28,89 @@
 #  Date   : 2025-10-09
 # ============================================================================
 
-from __future__ import annotations
-import os, json, cv2
-from typing import Dict, Tuple, Optional
-from ultralytics import YOLO
+from typing import Dict, Tuple, Optional, Union
 import numpy as np
+import os, json, cv2
+from ultralytics import YOLO
 from colorama import Fore, Style, init
 init(autoreset=True)
 
-ROI = Tuple[int, int, int, int]
+ROIBox = Tuple[int, int, int, int]
+Point = Tuple[int, int]
+ROIQuad = Tuple[Point, Point, Point, Point]
+ROI = Union[ROIBox, ROIQuad]
 CANON_FACES = ["U", "D", "L", "R", "F", "B"]
 
-# ----------------------------------------------------------------------------
-#  Validation et I/O
-# ----------------------------------------------------------------------------
-
 def validate_roi_dict(roi_data: Dict[str, ROI]) -> bool:
-    """Validation basique de la structure ROI."""
+    """Compatible 2 formats:
+      - ROIBox: (x1,y1,x2,y2)
+      - ROIQuad: ((xTL,yTL),(xTR,yTR),(xBR,yBR),(xBL,yBL))
+    """
     if not isinstance(roi_data, dict):
         return False
+
     for f in CANON_FACES:
         if f not in roi_data:
             return False
         v = roi_data[f]
-        if not isinstance(v, (list, tuple)) or len(v) != 4:
+        if not isinstance(v, (list, tuple)):
             return False
-        x1, y1, x2, y2 = v
-        try:
-            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-        except Exception:
-            return False
-        if x2 <= x1 or y2 <= y1:
-            return False
+
+        # bbox: 4 nombres
+        if len(v) == 4 and all(not isinstance(x, (list, tuple)) for x in v):
+            try:
+                x1, y1, x2, y2 = map(int, v)
+            except Exception:
+                return False
+            if x2 <= x1 or y2 <= y1:
+                return False
+            continue
+
+        # quad: 4 points
+        if len(v) == 4 and all(isinstance(pt, (list, tuple)) and len(pt) == 2 for pt in v):
+            try:
+                pts = [(int(px), int(py)) for (px, py) in v]
+            except Exception:
+                return False
+            xs = [x for x, _ in pts]
+            ys = [y for _, y in pts]
+            if max(xs) - min(xs) < 5 or max(ys) - min(ys) < 5:
+                return False
+            continue
+
+        return False
+
     return True
 
-
 def load_calibration(filename: str | None = "rubiks_calibration.json") -> Optional[Dict[str, ROI]]:
-    """Charge la calibration ROI depuis un fichier JSON."""
     if filename is None:
-        filename = "rubiks_calibration.json"  # fallback par défaut
+        filename = "rubiks_calibration.json"
 
     try:
         if not os.path.exists(filename):
-            print(f"Aucune calibration ROI trouvée ({filename}). Lancez d'abord le mode calibration.")
+            print(f"Aucune calibration ROI trouvée ({filename}).")
             return None
 
-        with open(filename, 'r', encoding='utf-8') as f:
+        with open(filename, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        norm = {k: tuple(map(int, v)) for k, v in data.items() if k in CANON_FACES}
+        norm: Dict[str, ROI] = {}
+        for k, v in data.items():
+            if k not in CANON_FACES:
+                continue
+
+            # bbox
+            if isinstance(v, (list, tuple)) and len(v) == 4 and all(not isinstance(x, (list, tuple)) for x in v):
+                norm[k] = tuple(map(int, v))  # type: ignore[assignment]
+                continue
+
+            # quad
+            if isinstance(v, (list, tuple)) and len(v) == 4 and all(isinstance(pt, (list, tuple)) and len(pt) == 2 for pt in v):
+                norm[k] = tuple((int(px), int(py)) for (px, py) in v)  # type: ignore[assignment]
+                continue
+
         if not validate_roi_dict(norm):
-            print("⚠️ Calibration ROI invalide (format ou valeurs incohérentes).")
+            print("⚠️ Calibration ROI invalide.")
             return None
 
         print(f"✅ Calibration ROI chargée depuis {filename}")
@@ -90,12 +122,21 @@ def load_calibration(filename: str | None = "rubiks_calibration.json") -> Option
 
 
 def save_calibration(roi_data: Dict[str, ROI], filename: str = "rubiks_calibration.json") -> bool:
-    """Sauvegarde la calibration ROI au format JSON (sécurisée)."""
     try:
         if not validate_roi_dict(roi_data):
-            raise ValueError("roi_data invalide (structure ou valeurs)")
+            raise ValueError("roi_data invalide")
 
-        payload = {k: [int(x) for x in v] for k, v in roi_data.items()}
+        payload = {}
+        for k, v in roi_data.items():
+            # bbox
+            if isinstance(v, (list, tuple)) and len(v) == 4 and all(not isinstance(x, (list, tuple)) for x in v):
+                payload[k] = [int(x) for x in v]
+                continue
+            # quad
+            if isinstance(v, (list, tuple)) and len(v) == 4 and all(isinstance(pt, (list, tuple)) and len(pt) == 2 for pt in v):
+                payload[k] = [[int(px), int(py)] for (px, py) in v]
+                continue
+
         tmp = filename + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2, ensure_ascii=False)
@@ -108,7 +149,6 @@ def save_calibration(roi_data: Dict[str, ROI], filename: str = "rubiks_calibrati
         print(f"❌ Erreur sauvegarde ROI: {e}")
         return False
 
-
 # ----------------------------------------------------------------------------
 #  Calibration interactive
 # ----------------------------------------------------------------------------
@@ -116,26 +156,41 @@ def save_calibration(roi_data: Dict[str, ROI], filename: str = "rubiks_calibrati
 _click_points = []
 _temp_image = None
 _current_face = ""
+_calib_points_needed = 2  # 2 pour bbox, 4 pour quad
 
 def _mouse_callback(event, x, y, flags, param):
-    global _click_points, _temp_image, _current_face
-    if event == cv2.EVENT_LBUTTONDOWN:
-        _click_points.append((x, y))
-        cv2.circle(_temp_image, (x, y), 5, (0, 255, 0), -1)
-        cv2.imshow(f'Calibration { _current_face }', _temp_image)
+    global _click_points, _temp_image, _current_face, _calib_points_needed
+    if event != cv2.EVENT_LBUTTONDOWN:
+        return
+
+    _click_points.append((x, y))
+    cv2.circle(_temp_image, (x, y), 5, (0, 255, 0), -1)
+
+    if _calib_points_needed == 2:
         if len(_click_points) == 2:
             x1, y1 = _click_points[0]
             x2, y2 = _click_points[1]
             cv2.rectangle(_temp_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.imshow(f'Calibration { _current_face }', _temp_image)
             print(f"Rectangle défini: ({x1},{y1}) → ({x2},{y2})")
-            print("Appuyez sur 'ENTER' pour valider ou 'r' pour recommencer.")
+            print("ENTER valider / r recommencer")
+    else:
+        if len(_click_points) >= 2:
+            pts = np.array(_click_points, dtype=np.int32).reshape((-1, 1, 2))
+            cv2.polylines(_temp_image, [pts], False, (0, 255, 0), 2)
+        if len(_click_points) == 4:
+            pts = np.array(_click_points, dtype=np.int32).reshape((-1, 1, 2))
+            cv2.polylines(_temp_image, [pts], True, (0, 255, 0), 2)
+            print(f"Quad défini: {_click_points}")
+            print("ENTER valider / r recommencer")
 
-def calibrate_single_face(image_path: str, face_name: str) -> Optional[ROI]:
-    """Calibre une seule face à partir d'une image."""
-    global _click_points, _temp_image, _current_face
+    cv2.imshow(f"Calibration {_current_face}", _temp_image)
+
+
+def calibrate_single_face(image_path: str, face_name: str, mode: str = "bbox") -> Optional[ROI]:
+    global _click_points, _temp_image, _current_face, _calib_points_needed
     _click_points = []
     _current_face = face_name
+    _calib_points_needed = 2 if mode == "bbox" else 4
 
     image = cv2.imread(image_path)
     if image is None:
@@ -143,77 +198,62 @@ def calibrate_single_face(image_path: str, face_name: str) -> Optional[ROI]:
         return None
 
     _temp_image = image.copy()
-    print(f"\n=== Calibration face {face_name} ===")
-    print("1. Cliquez coin haut-gauche")
-    print("2. Cliquez coin bas-droit")
-    print("ENTER = valider, 'r' = recommencer, 'q' = ignorer")
+    print(f"\n=== Calibration face {face_name} ({mode}) ===")
 
-    cv2.namedWindow(f'Calibration {face_name}', cv2.WINDOW_NORMAL)
-    cv2.imshow(f'Calibration {face_name}', _temp_image)
-    cv2.setMouseCallback(f'Calibration {face_name}', _mouse_callback)
+    if mode == "bbox":
+        print("1) clic coin haut-gauche  2) clic coin bas-droit")
+    else:
+        print("Clique 4 coins dans l'ordre : TL, TR, BR, BL")
+
+    cv2.namedWindow(f"Calibration {face_name}", cv2.WINDOW_NORMAL)
+    cv2.imshow(f"Calibration {face_name}", _temp_image)
+    cv2.setMouseCallback(f"Calibration {face_name}", _mouse_callback)
 
     while True:
         key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
+        if key == ord("q"):
             cv2.destroyAllWindows()
             return None
-        elif key == ord('r'):
+        elif key == ord("r"):
             _click_points = []
             _temp_image = image.copy()
-            cv2.imshow(f'Calibration {face_name}', _temp_image)
-        elif key == 13 and len(_click_points) == 2:  # ENTER
-            x1, y1 = _click_points[0]
-            x2, y2 = _click_points[1]
+            cv2.imshow(f"Calibration {face_name}", _temp_image)
+        elif key == 13 and len(_click_points) == _calib_points_needed:  # ENTER
             cv2.destroyAllWindows()
-            roi = (min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2))
-            print(f"ROI validée: {roi}")
-            return roi
+            if mode == "bbox":
+                x1, y1 = _click_points[0]
+                x2, y2 = _click_points[1]
+                return (min(x1,x2), min(y1,y2), max(x1,x2), max(y1,y2))
+            else:
+                return tuple((int(x), int(y)) for (x, y) in _click_points)
 
 # ----------------------------------------------------------------------------
 #  Calibration interactive
 # ----------------------------------------------------------------------------
 
-def calibrate_roi_interactive(single_face_only: bool = True) -> Dict[str, ROI]:
-    """Calibre les 6 faces (avec option même ROI pour toutes)."""
+def calibrate_roi_interactive(single_face_only: bool = True, mode: str = "bbox") -> Dict[str, ROI]:
     faces = ["U", "D", "L", "R", "F", "B"]
     files = [f"tmp/{f}.jpg" for f in faces]
     roi_data: Dict[str, ROI] = {}
     first_roi = None
     first_face = None
 
-    print("\n=== MODE CALIBRATION ROI ===")
-    print("Instructions:")
-    print(" - Cliquez deux coins pour chaque face")
-    print(" - ENTER = valider, 'r' = recommencer, 'q' = ignorer cette face\n")
-
-    if single_face_only:
-        print("⚙️  Mode: même ROI appliquée à toutes les faces.")
-
     for file_path, face in zip(files, faces):
         if not os.path.exists(file_path):
-            print(f"Fichier {file_path} introuvable → ignoré.")
             continue
-
         if single_face_only and first_roi is not None:
             roi_data[face] = first_roi
-            print(f"➡️  Face {face}: même ROI que {first_face}")
         else:
-            roi = calibrate_single_face(file_path, face)
+            roi = calibrate_single_face(file_path, face, mode=mode)
             if roi:
                 roi_data[face] = roi
-                print(f"✅ Face {face} calibrée: {roi}")
                 if single_face_only and first_roi is None:
                     first_roi = roi
                     first_face = face
 
     if roi_data:
         save_calibration(roi_data)
-        print(f"\n✅ Calibration sauvegardée ({len(roi_data)} faces calibrées).")
-    else:
-        print("\n❌ Aucune face calibrée.")
-
     return roi_data
-
 
 # ----------------------------------------------------------------------------
 #  Calibration automatique avec yolo
@@ -286,26 +326,22 @@ def calibrate_roi_yolo(model_path="in/best.pt", images_dir="tmp", show_preview=T
 # ----------------------------------------------------------------------------
 
 def calibration_menu():
-    """Menu simple pour lancer la calibration ROI."""
-    print(Fore.YELLOW + Style.BRIGHT + "\n=== MODE CALIBRATION ROI ===" + Style.RESET_ALL)
-    print(Fore.WHITE + "Vous allez calibrer les 6 faces: F, R, B, L, U, D (ordre optimal robot)")
-
-    print(Fore.YELLOW + Style.BRIGHT + "\n=== MENU CALIBRATION ROI ===" + Style.RESET_ALL)
-    print(Fore.GREEN + "1." + Fore.WHITE + " Même ROI pour les 6 faces (mode rapide)")
-    print(Fore.GREEN + "2." + Fore.WHITE + " ROI différente par face (mode complet)")
-    print(Fore.GREEN + "3." + Fore.WHITE + " ROI automatique avec YOLO")
-    print(Fore.RED + "4." + Fore.WHITE + " Quitter\n")
-
-    choice = input(Fore.YELLOW + "Choisissez une option (1/2/3) : " + Style.RESET_ALL).strip()
+    print("\n=== MENU CALIBRATION ROI ===")
+    print("1) bbox (même ROI)")
+    print("2) bbox (par face)")
+    print("3) bbox YOLO")
+    print("4) QUAD (même quad)")
+    print("5) QUAD (par face)")
+    print("6) Quitter")
+    choice = input("Choix: ").strip()
 
     if choice == "1":
-        print(Fore.CYAN + "➡️ Calibration avec une même ROI pour les 6 faces" + Style.RESET_ALL)
-        calibrate_roi_interactive(single_face_only=True)
+        calibrate_roi_interactive(True, "bbox")
     elif choice == "2":
-        print(Fore.CYAN + "➡️ Calibration individuelle des 6 faces" + Style.RESET_ALL)
-        calibrate_roi_interactive(single_face_only=False)
+        calibrate_roi_interactive(False, "bbox")
     elif choice == "3":
-        print(Fore.CYAN + "➡️ Calibration automatique avec YOLO" + Style.RESET_ALL)
-        calibrate_roi_yolo()        
-    else:
-        print(Fore.YELLOW + "Fin du mode calibration ROI." + Style.RESET_ALL)
+        calibrate_roi_yolo()
+    elif choice == "4":
+        calibrate_roi_interactive(True, "quad")
+    elif choice == "5":
+        calibrate_roi_interactive(False, "quad")

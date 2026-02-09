@@ -10,6 +10,8 @@ Connexions:
 import time
 import board
 import neopixel
+import digitalio
+import json, os
 
 # Configuration de l'anneau LED
 LED_PIN = board.D18      # GPIO18
@@ -17,17 +19,68 @@ LED_COUNT = 24           # Nombre de LEDs (changez selon votre anneau: 12, 16, 2
 BRIGHTNESS = 0.3         # Luminosité (0.0 à 1.0)
 
 # Initialisation de l'anneau
-pixels = neopixel.NeoPixel(LED_PIN, LED_COUNT, brightness=BRIGHTNESS, auto_write=False)
+#pixels = neopixel.NeoPixel(LED_PIN, LED_COUNT, brightness=BRIGHTNESS, auto_write=False)
 
+
+FLAG_FILE = "tmp/led_state.json"
+def charger_etat_leds():
+    """Charge l'état des LEDs depuis le fichier (retourne 'ON' ou 'OFF')"""
+    if os.path.exists(FLAG_FILE):
+        try:
+            with open(FLAG_FILE, 'r') as f:
+                data = json.load(f)
+                etat = data.get("state", "OFF")
+                print(f"📖 État chargé : {etat}")
+                return etat
+        except Exception as e:
+            print(f"⚠️ Erreur lecture : {e}")
+            return "OFF"
+    else:
+        print("ℹ️ Pas de config, défaut : OFF")
+        return "OFF"
+leds_off = charger_etat_leds()
+if leds_off == "OFF":
+    pixels = None
+else:
+    pixels = neopixel.NeoPixel(LED_PIN, LED_COUNT, brightness=BRIGHTNESS, auto_write=False)
 
 # ========== FONCTIONS D'EFFETS ==========
 
 def eteindre():
     """Éteint toutes les LEDs"""
+    if leds_off == "OFF": ####### BIDOUILLE POUR FORCER LES LEDS ETEINTES
+        return        
     pixels.fill((0, 0, 0))
     pixels.show()
     print("✨ Toutes les LEDs éteintes")
 
+
+def eteindre_force():
+    if leds_off == "OFF": ####### BIDOUILLE POUR FORCER LES LEDS ETEINTES
+        return        
+    """Éteint les LEDs en resetant complètement le bus"""
+    global pixels
+    
+    # 1. Désactive les NeoPixels
+    pixels.deinit()
+    time.sleep(0.2)
+    
+    # 2. Reset hard du GPIO
+    pin = digitalio.DigitalInOut(board.D18)
+    pin.direction = digitalio.Direction.OUTPUT
+    pin.value = False
+    time.sleep(0.2)
+    pin.deinit()
+    time.sleep(0.2)
+    
+    # 3. Réinitialise les NeoPixels
+    pixels = neopixel.NeoPixel(board.D18, LED_COUNT, brightness=BRIGHTNESS, auto_write=False)  # ✅ LED_COUNT au lieu de NUM_LEDS
+    pixels.fill((0, 0, 0))
+    pixels.show()
+    time.sleep(0.1)
+    pixels.show()
+    
+    print("✨ LEDs forcées à l'extinction")
 
 def couleur_fixe(couleur, duree=3):
     """
@@ -218,12 +271,75 @@ def etincelle(couleur=(255, 255, 255), duree=3, densite=0.3):
         pixels.show()
         time.sleep(0.05)
 
-def eclairage_capture(brightness=0.4):
+def eclairage_capture(brightness=0.12):
     """💡 Mode éclairage pour la capture d’images du cube"""
     print(f"💡 Mode éclairage capture (blanc neutre, intensité {brightness*100:.0f}%)")
     pixels.brightness = brightness
     pixels.fill((255, 255, 255))
     pixels.show()
+
+VISION_PRESETS = {
+    "warm": (255, 170, 40),
+    "very_warm": (255, 150, 30),
+    "neutral":   (255, 180, 60),
+    "coolish": (220, 170, 90),
+    "warm_balanced": (255, 185, 70),
+    "neutral_warm": (255, 200, 100),
+    # ✅ nouveaux presets "vision"
+    "white":     (255, 255, 255),   # vrai blanc
+    "cold":      (200, 220, 255),   # plus froid (aide rouge vs orange)
+    "cool":      (180, 210, 255),   # encore plus froid si cube brillant
+}
+def eclairage_capture_2_leds_preset(
+    brightness=0.08,  # Max pour LEDs arrière
+    #leds=(17,18,19,20,21,22,23),
+    leds=(18,22),
+    preset="neutral_warm",
+    gradient=False
+):
+    if leds_off == "OFF": ####### BIDOUILLE POUR FORCER LES LEDS ETEINTES
+        return
+    
+    color = VISION_PRESETS.get(preset, VISION_PRESETS["white"])
+    r, g, b = color
+    
+    if gradient:
+        # Gradient prononcé : avant 40%, arrière 100%
+        gradient_coeffs = [0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4]
+        #                   ↑avant       ↑arrière      ↑avant
+        
+        pixels.fill((0, 0, 0))
+        
+        for i, led_idx in enumerate(leds):
+            b_led = brightness * gradient_coeffs[i]
+            pixels[led_idx] = (
+                int(r * b_led),
+                int(g * b_led),
+                int(b * b_led)
+            )
+        
+        pixels.show()
+        return pixels
+    else:
+        # Uniforme (backward compatibility)
+        return eclairage_capture_2_leds(brightness=brightness, leds=leds, color=color)
+
+def eclairage_capture_2_leds(brightness=0.15, leds=(19,21),color=(255, 180, 60)):
+    """
+    💡 Éclairage capture avec seulement 2 LED en haut
+    """
+    if leds_off == "OFF": ####### BIDOUILLE POUR FORCER LES LEDS ETEINTES
+        return    
+    pixels.brightness = brightness
+    pixels.fill((0, 0, 0))          # tout éteint
+
+    r, g, b = color
+    for i in leds:
+        pixels[i] = (r, g, b) # blanc
+
+    pixels.show()
+    print(f"💡 2 LED actives {leds}, brightness={brightness:.2f}, color={color}")
+
 
 
 # ========== MENU ET PROGRAMME PRINCIPAL ==========
@@ -247,6 +363,7 @@ def afficher_menu():
     print("12. Couleur fixe bleu")
     print("13. Couleur fixe vert")
     print("14. Éclairage capture (blanc neutre)")
+    print("15. Éclairage capture (blanc neutre) - 2 Led")
     print("0.  Éteindre et quitter")
     print("="*50)
 
@@ -288,6 +405,8 @@ def main():
                 couleur_fixe((0, 255, 0), duree=3)
             elif choix == "14":
                 eclairage_capture()
+            elif choix == "15":
+                eclairage_capture_2_leds()                
             elif choix == "0":
                 print("\n👋 Arrêt du programme...")
                 eteindre()

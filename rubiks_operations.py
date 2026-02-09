@@ -33,7 +33,7 @@ import json
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, asdict
 from enum import Enum
-
+import traceback
 
 class DebugMode(Enum):
     """Modes de debug disponibles"""
@@ -129,16 +129,19 @@ class RubiksOperations:
             Dict avec success, data (couleurs calibrées), error
         """
         try:
-            from process_images_cube import calibrate_colors_interactive
+            from calibration_colors import calibrate_colors_interactive
             calibrate_colors_interactive()
             return OperationResult(
                 success=True,
                 message="Calibration des couleurs terminée"
             ).to_dict()
         except Exception as e:
+            import traceback
+            traceback.print_exc()
+            tb = traceback.format_exc()
             return OperationResult(
                 success=False,
-                error=f"Erreur lors de la calibration des couleurs: {str(e)}"
+                error=f"Erreur lors de la calibration des couleurs: {e}\n\nTRACEBACK:\n{tb}"
             ).to_dict()
 
     def get_calibration_status(self) -> Dict:
@@ -150,7 +153,7 @@ class RubiksOperations:
         """
         try:
             from calibration_rubiks import get_calibration_stats, load_calibration
-            from process_images_cube import load_color_calibration
+            from calibration_colors import load_color_calibration
 
             stats = get_calibration_stats()
             roi_data = load_calibration()
@@ -223,7 +226,7 @@ class RubiksOperations:
             Dict avec success, data (dict des couleurs), error
         """
         try:
-            from process_images_cube import load_color_calibration
+            from calibration_colors  import load_color_calibration
             color_data = load_color_calibration()
             
             if color_data is None:
@@ -258,7 +261,7 @@ class RubiksOperations:
         """
         try:
             from calibration_rubiks import load_calibration
-            from process_images_cube import load_color_calibration
+            from calibration_colors import load_color_calibration
             from processing_rubiks import production_mode
 
             # Vérification des calibrations
@@ -362,8 +365,8 @@ class RubiksOperations:
             Dict avec success, data (analyse de la face), error
         """
         try:
-            from calibration_rubiks import load_calibration
-            from process_images_cube import load_color_calibration, test_single_face_debug
+            from calibration_rubiks import load_calibration, load_color_calibration
+            from process_images_cube import test_single_face_debug
 
             face = face.upper()
             if face not in ['F', 'R', 'B', 'L', 'U', 'D']:
@@ -518,7 +521,7 @@ class RubiksOperations:
     # MODE ROBOT
     # ========================================================================
 
-    def run_robot_mode(self, do_solve: bool = True, do_execute: bool = True,
+    def run_robot_mode(self, do_solve: bool = True, do_execute: bool = False,
                        debug: str = "text") -> Dict:
         """
         Exécute le pipeline complet en mode robot.
@@ -533,18 +536,30 @@ class RubiksOperations:
         """
         try:
             from robot_solver import RobotCubeSolver
-            
+            from progress_listeners import console_clean_listener, jsonl_file_listener, multi_listener
+            from tft_driver import ConsoleTFTFile
+            from tft_listener import make_tft_listener
+            tft = ConsoleTFTFile(path=f"{self.tmp_folder}/tft_screen.txt", width=24) # METTRE ICI LE BON DRIVER ECRAN en attendant on écrit dans une console
+            tft_listener = make_tft_listener(tft, min_refresh_s=0.15, max_line_len=24)
+            file_listener = jsonl_file_listener(folder=self.tmp_folder, prefix="progress")
+            listeners = [console_clean_listener, file_listener,tft_listener]
+            listener = multi_listener(*listeners)
             solver = RobotCubeSolver(image_folder=self.tmp_folder, debug=debug)
-            cubestring = solver.run(do_solve=do_solve, do_execute=do_execute)
-            
+            result  = solver.run(do_solve=do_solve, do_execute=do_execute,progress_callback=listener)
+            if do_solve:
+                cubestring, solution = result
+            else:
+                cubestring, solution = result, ""
             return OperationResult(
                 success=True,
                 data={
                     "cubestring": cubestring,
+                    "solution": solution,
+                    "log_jsonl": getattr(file_listener, "path", None),  # chemin du fichier jsonl
                     "solved": do_solve,
                     "executed": do_execute
                 },
-                message="Pipeline robot terminé avec succès"
+                message="Pipeline robot terminé"
             ).to_dict()
 
         except Exception as e:
@@ -556,6 +571,68 @@ class RubiksOperations:
     # ========================================================================
     # CAPTURE D'IMAGES
     # ========================================================================
+
+    def capture_images_robot(self, rotation: int = 0, folder: str = "", debug: str = "text") -> Dict:
+        try:
+            from robot_solver import RobotCubeSolver
+            from capture_photo_from_311 import CameraInterface2
+            from robot_servo import reset_initial, flip_up
+
+        # 1) dossier de sortie (si folder == "" => pas de sous-dossier)
+            out_dir = self.tmp_folder if not folder else os.path.join(self.tmp_folder, folder)
+            os.makedirs(out_dir, exist_ok=True)
+
+            camera = CameraInterface2(rotation=rotation) if "rotation" in CameraInterface2.__init__.__code__.co_varnames else CameraInterface2()
+
+            # 2) init solver
+            solver = RobotCubeSolver(image_folder=out_dir, debug=debug, camera=camera)
+
+            # callback: 1 flip "x"
+            def flip_cb():
+                flip_up()
+
+            # 3) série: LEDs ON + lock caméra + capture faces + cleanup
+            camera.leds_on_for_scan()  # -> à implémenter/mapper vers ta fonction LEDs
+            # ✅ IMPORTANT : remettre le robot dans une pose connue AVANT le lock
+            reset_initial()
+
+            # ✅ Pré-lock multiface : 4 flips -> retour état initial (comme tu dis)
+            camera.lock_for_scan_multiface(
+                flip_cb=flip_cb,
+                n_samples=4,
+                aggregate="median",     # robuste (je recommande)
+                warmup_s=0.8,
+                settle_after_flip_s=0.25,
+                per_pose_timeout_s=1.2,
+                stability_pts=6,
+                tol=0.05,
+                min_exp=8000,
+                max_gain=8.0,
+                debug=True
+            )
+
+            solver.capture_all_faces()  # -> doit écrire U.jpg, R.jpg, F.jpg... dans out_dir
+            
+            camera.leds_off()                # -> à implémenter/mapper
+            camera.close()                   # -> important sur RPi (picam2)
+
+            return OperationResult(success=True, message="Prises de photos terminées avec succès avec robot").to_dict()
+
+        except Exception as e:
+            # Cleanup best-effort (ne jamais planter sur le cleanup)
+            print("❌ ERREUR lors de la capture des images:")
+            print(traceback.format_exc())            
+            try:
+                camera.leds_off()
+            except Exception:
+                pass
+            try:
+                camera.close()
+            except Exception:
+                pass
+
+            return OperationResult(success=False, error=f"Erreur en mode robot + photos: {str(e)}").to_dict()
+
 
     def capture_images(self, rotation: int = 0, folder: str = "captures") -> Dict:
         """
@@ -569,9 +646,10 @@ class RubiksOperations:
             Dict avec success, data (liste des fichiers), error
         """
         try:
-            from capture_photo_from_311 import capture_loop
+            from capture_photo_from_311 import CameraInterface2
+            camera = CameraInterface2()
             
-            output = capture_loop(rotation=rotation, folder=folder)
+            output = camera.capture_loop(rotation=rotation, folder=folder)
             
             if output:
                 return OperationResult(
@@ -622,7 +700,25 @@ class RubiksOperations:
                 error=f"Erreur lors de la capture: {str(e)}"
             ).to_dict()
 
+    # ========================================================================
+    # Calibration des blancs
+    # ========================================================================
+    def calibrate_blancs(self):
+        try:
+            from capture_photo_from_311 import CameraInterface2
+            camera = CameraInterface2()
+            camera.awb_menu(rotation=0, folder="tmp")
+            
+            return OperationResult(
+                success=True,
+                message="Calibration des blancs terminé avec succès"
+            ).to_dict()
 
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur calibration blancs: {str(e)}"
+            ).to_dict()
     # ========================================================================
     # TESTS GPIO (ANNEAU LUMINEUX, MOTEUR, ETC.)
     # ========================================================================
@@ -689,6 +785,81 @@ class RubiksOperations:
                 error=f"Erreur lors du test de l’anneau lumineux: {str(e)}"
             ).to_dict()
 
+    def test_tft(self, duration: int) -> Dict:
+        """
+        Lance l'affichage du GIF sur le TFT pendant X secondes.
+        """
+        try:
+            from ecran.tft import display_gif
+            display_gif(duration)
+
+            return OperationResult(
+                success=True,
+                message=f"Affichage TFT pendant {duration} secondes terminé."
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur TFT : {str(e)}"
+            ).to_dict()
+
+    def test_tft_text(self, message: str, duration: int = 5) -> Dict:
+        """
+        Affiche un texte sur le TFT pendant X secondes.
+        """
+        try:
+            from ecran.tft import display_text
+            display_text(message, duration)
+
+            return OperationResult(
+                success=True,
+                message=f"Texte affiché : '{message}' pendant {duration} sec"
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur TFT (texte) : {str(e)}"
+            ).to_dict()
+
+    def test_moteur(self) -> Dict:
+        """
+        Lance les tests du moteur
+        """
+        import os, sys, subprocess, importlib
+
+        try:
+            from robot_servo import hardware_test
+            hardware_test()
+            return OperationResult(
+                success=True,
+                message="Succès test moteur"
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors du test moteur: {str(e)}"
+            ).to_dict()
+
+    def test_mouvements_robot(self) -> Dict:
+        """
+        Lance les tests du moteur
+        """
+        try:
+            from robot_servo import manual_singmaster_loop_cubotino
+            manual_singmaster_loop_cubotino()
+            return OperationResult(
+                success=True,
+                message="Fin tests moteur"
+            ).to_dict()
+
+        except Exception as e:
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors du test moteur: {str(e)}"
+            ).to_dict()            
 
     # ========================================================================
     # UTILITAIRES

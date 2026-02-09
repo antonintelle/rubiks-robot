@@ -77,7 +77,17 @@ sudo apt install -y \
   build-essential \
   dos2unix \
   git curl wget pkg-config \
-  rpicam-apps
+  rpicam-apps \
+  python3-spidev \
+  python3-rpi.gpio \
+  python3-lgpio
+
+echo "🔧 Activation de pigpiod au démarrage..."
+sudo systemctl enable pigpiod
+echo "ℹ️ pigpiod sera démarré automatiquement au prochain reboot."
+
+echo "🔧 Activation du SPI..."
+sudo raspi-config nonint do_spi 0
 
 # ------------------------------------------------------------
 # 3️⃣  Création / activation de l’environnement virtuel
@@ -148,6 +158,16 @@ try:
     print("✅ Tkinter OK")
 except Exception as e:
     print("⚠️ Tkinter non fonctionnel :", e)
+PY
+
+echo "🖥️ Vérification écran TFT ST7735..."
+python3 - <<'PY'
+try:
+    from luma.core.interface.serial import spi
+    from luma.lcd.device import st7735
+    print("🟢 luma.lcd et ST7735 : OK (import réussi)")
+except Exception as e:
+    print("🔴 ERREUR : impossible d'importer luma.lcd/st7735 :", e)
 PY
 
 # ------------------------------------------------------------

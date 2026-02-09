@@ -7,33 +7,32 @@
 
 echo "🚀 Lancement de l’interface texte du solveur Rubik's Cube..."
 
-# --- Activation de l'environnement virtuel ---
-if [ -d "$HOME/rubik-env" ]; then
-    source "$HOME/rubik-env/bin/activate"
-else
-    echo "❌ Environnement virtuel non trouvé : ~/rubik-env"
-    echo "👉 Exécute d'abord : ./0_install_pipeline_v4.sh"
+VENV_DIR="$HOME/rubik-env"
+PROJECT_DIR="$HOME/rubik/pipeline-complet-rubik"
+SCRIPT="text_gui.py"
+VENV_PY="$VENV_DIR/bin/python3"
+
+# --- Vérification venv ---
+if [ ! -x "$VENV_PY" ]; then
+    echo "❌ Python du venv introuvable/exécutable : $VENV_PY"
+    echo "👉 Vérifie ton venv : $VENV_DIR"
     exit 1
 fi
 
 # --- Navigation vers le dossier du projet ---
-cd "$HOME/rubik/pipeline-complet-rubik" || {
-    echo "❌ Projet introuvable : ~/rubik/pipeline-complet-rubik"
-    deactivate
+cd "$PROJECT_DIR" || {
+    echo "❌ Projet introuvable : $PROJECT_DIR"
     exit 1
 }
 
 # --- Vérification du script principal ---
-if [ ! -f "text_gui.py" ]; then
-    echo "❌ Fichier text_gui.py introuvable dans le projet."
-    deactivate
+if [ ! -f "$SCRIPT" ]; then
+    echo "❌ Fichier $SCRIPT introuvable dans le projet."
     exit 1
 fi
 
-# --- Lancement du GUI texte ---
-echo "🖥️  Démarrage de text_gui.py..."
-python3 text_gui.py
+# --- Lancement (NeoPixel => besoin sudo pour /dev/mem) ---
+echo "🖥️  Démarrage de $SCRIPT (avec sudo, python du venv)..."
+sudo -E "$VENV_PY" "$SCRIPT"
 
-# --- Désactivation du venv ---
-deactivate
 echo "✅ Fin du programme (interface texte)."

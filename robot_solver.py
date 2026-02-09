@@ -6,7 +6,7 @@
 #     depuis la capture des images jusqu'à la résolution et l'exécution.
 #
 #  Pipeline (méthode run) :
-#     1) capture_all_faces  : acquisition des 6 faces (F,R,B,L,U,D) via caméra
+#     1) capture_images  : acquisition des 6 faces (F,R,B,L,U,D) via caméra
 #     2) calibrate_roi      : calibration automatique YOLO (optionnelle)
 #     3) detect_colors      : détection des couleurs par vision (FacesDict)
 #     4) convert_to_kociemba: conversion en string Kociemba 54 (URFDLB)
@@ -18,11 +18,11 @@
 #     - RobotCubeSolver : classe principale pilotant le pipeline complet
 #
 #  Méthodes clés de RobotCubeSolver :
-#     - capture_all_faces(progress_callback)  : capture avec progression
-#     - detect_colors(progress_callback)      : détection avec progression
+#     - capture_images()                      : capture avec progression
+#     - detect_colors()                       : détection avec progression
 #     - convert_to_kociemba()                 : conversion vers format solveur
 #     - solve()                               : appelle solver_wrapper.solve_cube
-#     - execute_moves(progress_callback)      : exécution avec progression
+#     - execute_moves()                       : exécution avec progression
 #     - run(callbacks...)                     : pipeline complet avec callbacks
 #     - emergency_stop()                      : arrêt d'urgence
 #
@@ -41,15 +41,15 @@
 #        [Caméra / Images F,R,B,L,U,D]
 #                       │
 #                       ▼
-#             capture_all_faces(callback)
-#         → callback(face, current, total, status)
+#             capture_images()
+#       
 #                       │
 #                       ▼
 #         calibrate_roi_yolo() [optionnel]
 #                       │
 #                       ▼
-#              detect_colors(callback)
-#         → callback(face, current, total, status)
+#              detect_colors()
+#        
 #                       │
 #                       ▼
 #         convert_to_kociemba()
@@ -62,20 +62,25 @@
 #     → Solution mouvements
 #              │
 #              ▼
-#        execute_moves(callback)
-#     → callback(current, total, move, next_move, status)
+#        execute_moves()
+#    
 # ============================================================================
 
 import os
 import threading
 
 from calibration_rubiks import load_calibration
-from process_images_cube import detect_colors_for_faces, load_color_calibration
+#from calibration_colors import load_color_calibration
+from process_images_cube import detect_colors_for_faces
 from processing_rubiks import convert_to_kociemba
 from solver_wrapper import solve_cube
-from robot_moves import execute_solution
+from robot_moves_cubotino import execute_solution,ExecutionStopped
 from calibration_roi import calibrate_roi_yolo
-
+from capture_photo_from_311 import CameraInterface2
+import traceback
+from types_shared import FaceResult, FacesDict
+from progress import emit as _emit
+from ultralytics.solutions import solutions
 
 class CameraInterface:
     """Interface générique pour une caméra réelle"""
@@ -92,6 +97,8 @@ class CameraInterface:
         """
         raise NotImplementedError("Implémenter la capture caméra")
 
+class CubeAlreadySolved(Exception):
+    pass
 
 class RobotCubeSolver:
     """
@@ -126,57 +133,157 @@ class RobotCubeSolver:
         # Stockage des résultats
         self.cube_string = None
         self.solution = None
-    
+        self.progress_callback = None
+
+    ## Utiliser pour les call backs
+    def emit(self, event: str, **data):  
+        _emit(self.progress_callback, event, **data)
     # ========================================================================
-    # ÉTAPE 1 : CAPTURE DES FACES
+    # ÉTAPE 1 : CAPTURE DES FACES capture_images
     # ========================================================================
-    
-    def capture_all_faces(self, progress_callback=None):
-        """
-        Capture les 6 faces du cube (ou vérifie leur présence).
-        
-        Args:
-            progress_callback: fonction appelée pour chaque face
-                             callback(face, current, total, status)
-                             status: "capturing", "completed", "loaded"
-        
-        Returns:
-            bool: True si succès
-        """
-        faces = ["F", "R", "B", "L", "U", "D"]
-        total = len(faces)
-        
-        # Si pas de caméra, on suppose que les fichiers existent déjà
-        if self.camera is None:
-            print("📁 Mode fichiers existants (pas de caméra)")
-            if progress_callback:
-                for i, face in enumerate(faces, 1):
-                    progress_callback(face, i, total, "loaded")
-            return True
-        
-        # Avec caméra : capture réelle
-        os.makedirs(self.image_folder, exist_ok=True)
-        print("📸 Capture des 6 faces...")
-        
-        for i, face in enumerate(faces, 1):
-            # Notifier début capture
-            if progress_callback:
-                progress_callback(face, i, total, "capturing")
-            
-            # Capture réelle
-            img = self.camera.capture_face(face)
-            
-            # TODO: Sauvegarder l'image
-            # import cv2
-            # cv2.imwrite(f"{self.image_folder}/{face}.jpg", img)
-            
-            # Notifier fin capture
-            if progress_callback:
-                progress_callback(face, i, total, "completed")
-        
-        print("✅ Capture terminée")
-        return True
-    
+
+    def capture_images(self):
+        import os, traceback
+        from robot_moves_cubotino import flip_up,return_to_u_fr
+        from robot_servo import reset_initial
+
+        camera = None
+        try:
+            print("🔍 Début de capture des images...")
+
+            rotation = 0
+            folder = ""
+
+            out_dir = self.image_folder if not folder else os.path.join(self.image_folder, folder)
+            os.makedirs(out_dir, exist_ok=True)
+
+            camera = CameraInterface2(rotation=rotation) if "rotation" in CameraInterface2.__init__.__code__.co_varnames else CameraInterface2()
+            self.camera = camera
+
+            self.emit("camera_lock_started",
+                    step="capture",
+                    face="LOCK",
+                    status="locking_started",
+                    pct=0.00,
+                    msg="Camera lock started (AE/AWB)")
+            camera.leds_on_for_scan()
+            reset_initial()
+
+            def flip_cb():
+                flip_up()
+
+            camera.lock_for_scan_multiface(
+                flip_cb=flip_cb,
+                n_samples=4,
+                aggregate="median",
+                warmup_s=0.8,
+                settle_after_flip_s=0.25,
+                per_pose_timeout_s=1.2,
+                stability_pts=6,
+                tol=0.05,
+                min_exp=8000,
+                max_gain=8.0,
+                debug=True
+            )
+            self.emit("camera_lock_done",
+                    step="capture",
+                    face="LOCK",
+                    status="locking_done",
+                    pct=0.02,
+                    msg="Camera lock done")
+            self.capture_all_faces()
+            print("🔍 Retour à l'état initial...")
+            #return_to_u_fr()
+            print("🔍 Fin de capture des images...")
+
+        except Exception as e:
+            print("❌ ERREUR lors de la capture des images:")
+            print(traceback.format_exc())
+            raise RuntimeError(f"CAPTURE_FAILED: {e}") from e
+
+        finally:
+            # cleanup best-effort
+            try:
+                if camera:
+                    camera.leds_off()
+            except Exception:
+                pass
+            try:
+                if camera:
+                    camera.close()
+            except Exception:
+                pass
+
+    def capture_all_faces(self):
+        from robot_moves_cubotino import flip_up,scan_yaw_out,scan_yaw_home
+
+        faces_total = 6
+        current = 0
+
+        # Capture occupe 0.02 -> 0.20 (comme dans l'exemple capture_images)
+        CAP_START = 0.02
+        CAP_END = 0.20
+
+        def pct_for(i: int) -> float:
+            return CAP_START + (CAP_END - CAP_START) * (i / faces_total)        
+
+        def snap(face):
+            nonlocal current
+            current += 1
+
+            self.emit(
+                "capture_face",
+                step="capture",
+                face=face,
+                current=current,
+                total=faces_total,
+                status="capturing",
+                pct=pct_for(current),
+                msg=f"Capturing {face} ({current}/{faces_total})"
+            )
+
+            print(f"📸 {face}")
+            self.camera.capture_image(
+                filename=f"{self.image_folder}/{face}.jpg",
+                rotation=0
+            )
+            self.emit(
+                "capture_face",
+                step="capture",
+                face=face,
+                current=current,
+                total=faces_total,
+                status="completed",
+                pct=pct_for(current),
+                msg=f"Captured {face} ({current}/{faces_total})"
+            )      
+        # U
+        snap("U")
+
+        # B
+        flip_up()
+        snap("B")
+
+        # D
+        flip_up()
+        snap("D")
+
+        # F
+        flip_up()
+        snap("F")
+
+        # R
+        scan_yaw_out("D")  # ou "G"
+        flip_up()
+        scan_yaw_home()
+        snap("R")
+
+        # L
+        flip_up()
+        flip_up()
+        snap("L")
+        scan_yaw_home()
+
     # ========================================================================
     # ÉTAPE 2 : CALIBRATION AUTOMATIQUE (optionnelle)
     # ========================================================================
@@ -194,20 +301,8 @@ class RobotCubeSolver:
     
     # ========================================================================
     # ÉTAPE 3 : DÉTECTION DES COULEURS
-    # ========================================================================
-    
-    def detect_colors(self, progress_callback=None):
-        """
-        Détecte les couleurs des 6 faces.
-        
-        Args:
-            progress_callback: fonction appelée pour chaque face
-                             callback(face, current, total, status)
-                             status: "processing", "completed"
-        
-        Returns:
-            dict: résultats de détection (FacesDict)
-        """
+    # ========================================================================  
+    def detect_colors(self):
         faces = ["F", "R", "B", "L", "U", "D"]
         total = len(faces)
         
@@ -215,34 +310,52 @@ class RobotCubeSolver:
         
         # Charger les calibrations
         roi = load_calibration()
-        color_calib = load_color_calibration()
-        
-        # Si pas de callback, appel classique
-        if progress_callback is None:
-            return detect_colors_for_faces(
-                self.image_folder, roi, color_calib, debug=self.debug
+        if roi is None:
+            raise ValueError("Calibration ROI introuvable")        
+        #color_calib = load_color_calibration()
+        color_calib = None
+
+        # plage de progression globale pour la détection
+        DET_START = 0.30
+        DET_END = 0.55
+
+        def pct_for(i: int) -> float:
+            return DET_START + (DET_END - DET_START) * (i / total)
+
+        # Simuler une progression "processing" pour l'UI
+        for i, face in enumerate(faces, 1):
+            self.emit(
+                "detect_face",
+                step="detection",
+                face=face,
+                current=i,
+                total=total,
+                status="processing",
+                pct=pct_for(i),
+                msg=f"Processing {face} ({i}/{total})"
             )
-        
+
+        color_results: FacesDict = detect_colors_for_faces(self.image_folder, roi, color_calib, debug=self.debug,strict=True)
+
         # Avec progression : notifier chaque face
         # Note: detect_colors_for_faces traite toutes les faces d'un coup
         # On simule la progression pour l'interface
         
+        # Notifier fin "completed"
         for i, face in enumerate(faces, 1):
-            if progress_callback:
-                progress_callback(face, i, total, "processing")
-        
-        # Traitement réel
-        results = detect_colors_for_faces(
-            self.image_folder, roi, color_calib, debug=self.debug
-        )
-        
-        # Notifier fin
-        for i, face in enumerate(faces, 1):
-            if progress_callback:
-                progress_callback(face, i, total, "completed")
+            self.emit(
+                "detect_face",
+                step="detection",
+                face=face,
+                current=i,
+                total=total,
+                status="completed",
+                pct=pct_for(i),
+                msg=f"Completed {face} ({i}/{total})"
+            )
         
         print("✅ Détection terminée")
-        return results
+        return color_results
     
     # ========================================================================
     # ÉTAPE 4 : CONVERSION EN FORMAT KOCIEMBA
@@ -265,13 +378,26 @@ class RobotCubeSolver:
         
         ok, cube, err = convert_to_kociemba(
             color_results,
-            mode="robot_raw",
+            mode="robot_cam",
             strategy="center_hsv",
             debug=self.debug
         )
         
         if not ok:
             raise ValueError(f"Échec conversion: {err}")
+
+        if not isinstance(cube, str) or len(cube) != 54:
+            raise ValueError(f"CubeString invalide: len={len(cube) if isinstance(cube,str) else type(cube)} cube={cube!r}")
+
+        allowed = set("URFDLB")
+        if set(cube) - allowed:
+            raise ValueError(f"CubeString contient des caractères invalides: {set(cube) - allowed}")
+
+        # optionnel : vérifier 9 de chaque lettre
+        from collections import Counter
+        cnt = Counter(cube)
+        if any(cnt[k] != 9 for k in "URFDLB"):
+            raise ValueError(f"Répartition invalide (doit être 9x chaque): {dict(cnt)}")
         
         print(f"✅ CubeString: {cube}")
         self.cube_string = cube
@@ -281,51 +407,73 @@ class RobotCubeSolver:
     # ÉTAPE 5 : RÉSOLUTION
     # ========================================================================
     
-    def solve(self, cube_string):
-        """
-        Résout le cube avec le solveur Kociemba.
-        
-        Args:
-            cube_string: string de 54 caractères (URFDLB)
-        
-        Returns:
-            str: solution (séquence de mouvements)
-        """
-        print("🧩 Résolution du cube...")
-        solution = solve_cube(cube_string)
-        print(f"✅ Solution: {solution}")
+    def solve(self, cube_string: str, method: str = "kociemba") -> str:
+        print(f"🧩 Résolution du cube... (method={method})")
+
+        cube_string = (cube_string or "").strip()
+        SOLVED_URFDLB = "U"*9 + "R"*9 + "F"*9 + "D"*9 + "L"*9 + "B"*9
+
+        if cube_string == SOLVED_URFDLB:
+            raise CubeAlreadySolved("Cube déjà résolu (état = URFDLB solved).")
+
+        try:
+            solution = solve_cube(cube_string, method=method)
+        except Exception as e:
+            raise RuntimeError(f"SOLVE_FAILED method={method}: {e}") from e
+
+        solution = (solution or "").strip()
+        print(f"✅ Solution: {solution!r}")
+
+        # optionnel : tu peux aussi traiter solution=="" comme "déjà résolu"
+        if solution == "":
+            raise CubeAlreadySolved("Cube déjà résolu (solution vide).")
+
         self.solution = solution
         return solution
-    
+
+
     # ========================================================================
     # ÉTAPE 6 : EXÉCUTION DES MOUVEMENTS
     # ========================================================================
     
-    def execute_moves(self, solution: str, progress_callback=None):
-        """
-        Exécute la séquence de mouvements sur le robot.
-        
-        Args:
-            solution: séquence de mouvements (ex: "U R2 F' L")
-            progress_callback: callback(current, total, move, next_move, status)
-                             status: "executing", "completed", "finished", "stopped"
-        
-        Returns:
-            bool: True si terminé, False si arrêté
-        """
+    def execute_moves(self, solution: str, start_mode="LUB"):
         print("▶️ Exécution des mouvements...")
-        success = execute_solution(
-            solution,
-            progress_callback=progress_callback,
-            stop_flag=self.stop_flag
-        )
-        
-        if success:
+        #input("Entrée pour continuer (stop si effort anormal) ")
+
+        EXEC_START, EXEC_END = 0.70, 1.00
+
+        def progress(event, data):
+            # On copie + on enlève la clé "event" si robot_moves l'a mise,
+            # pour éviter collision / double event dans le payload final.
+            data = dict(data)
+            data.pop("event", None)
+
+            idx = data.get("index") or data.get("current") or 0
+            tot = data.get("total") or 0
+            pct = EXEC_START + (EXEC_END - EXEC_START) * (idx / tot) if tot else None
+
+            # Clamp optionnel (évite >1.0 si idx dépasse total)
+            if isinstance(pct, (int, float)):
+                if pct < EXEC_START: pct = EXEC_START
+                if pct > EXEC_END: pct = EXEC_END
+
+            self.emit(event, pct=pct, **data)
+
+        try:
+            _moves_str = execute_solution(
+                solution,
+                start_mode=start_mode,
+                verbose=True,
+                dry_run=False,
+                stop_flag=self.stop_flag,
+                progress_callback=progress,
+            )
             print("✅ Exécution terminée")
-        else:
+            return True
+
+        except ExecutionStopped:
             print("🔴 Exécution interrompue")
-        
-        return success
+            return False
     
     # ========================================================================
     # PIPELINE COMPLET
@@ -334,96 +482,61 @@ class RobotCubeSolver:
     def run(self,
             do_solve=False,
             do_execute=False,
-            auto_calibrate=True,
-            capture_callback=None,
-            detect_callback=None,
-            solve_callback=None,
-            execute_callback=None):
-        """
-        Exécute le pipeline complet avec callbacks optionnels.
-        
-        Args:
-            do_solve: calculer la solution (sinon s'arrête après encodage)
-            do_execute: exécuter les mouvements (nécessite do_solve=True)
-            auto_calibrate: calibration automatique YOLO après capture
-            
-            capture_callback(face, current, total, status):
-                Appelé pendant la capture des faces
-                status: "capturing", "completed", "loaded"
-            
-            detect_callback(face, current, total, status):
-                Appelé pendant la détection des couleurs
-                status: "processing", "completed"
-            
-            solve_callback(status):
-                Appelé aux différentes étapes du pipeline
-                status: "capture_started", "capture_completed",
-                       "calibration_started", "calibration_completed",
-                       "detection_started", "detection_completed",
-                       "conversion_started", "conversion_completed",
-                       "solving_started", "solving_completed",
-                       "execution_started", "execution_completed", "execution_stopped"
-            
-            execute_callback(current, total, move, next_move, status):
-                Appelé pendant l'exécution des mouvements
-                status: "executing", "completed", "finished", "stopped"
-        
-        Returns:
-            tuple: (cube_string, solution) si do_solve=True
-            str: cube_string si do_solve=False
-        
-        Raises:
-            ValueError: si erreur dans le pipeline
-        """
-        
+            auto_calibrate=False,
+            progress_callback=None):
+        # # Initialise la fonction de callback
+        self.progress_callback = progress_callback
+
         # Réinitialiser le flag d'arrêt
         self.stop_flag.clear()
         
         # ====================================================================
         # 1️⃣ CAPTURE DES FACES
         # ====================================================================
-        if solve_callback:
-            solve_callback("capture_started")
-        
-        self.capture_all_faces(capture_callback)
-        
-        if solve_callback:
-            solve_callback("capture_completed")
-        
+        self.emit("capture_started", step="capture", pct=0.00, msg="Capture started")
+        try:
+            self.capture_images()
+            self.emit("capture_completed", step="capture", pct=0.20, msg="Capture completed")
+        except Exception as e:
+            self.emit("capture_failed", step="capture", pct=0.20, msg=str(e), err=str(e))
+            raise
+
+
         # ====================================================================
         # 2️⃣ CALIBRATION AUTOMATIQUE YOLO (optionnelle)
         # ====================================================================
         if auto_calibrate:
-            if solve_callback:
-                solve_callback("calibration_started")
-            
-            self.calibrate_roi_auto(show_preview=False)
-            
-            if solve_callback:
-                solve_callback("calibration_completed")
+            self.emit("calibration_started", step="calibration", pct=0.20, msg="Calibration started (YOLO)")       
+            try:
+                self.calibrate_roi_auto(show_preview=False)
+                self.emit("calibration_completed", step="calibration", pct=0.30, msg="Calibration completed")
+            except Exception as e:
+                self.emit("calibration_failed", step="calibration", pct=0.30, msg=str(e), err=repr(e))
+                raise                
         
         # ====================================================================
         # 3️⃣ DÉTECTION DES COULEURS
         # ====================================================================
-        if solve_callback:
-            solve_callback("detection_started")
-        
-        color_results = self.detect_colors(detect_callback)
-        
-        if solve_callback:
-            solve_callback("detection_completed")
+        self.emit("detection_started", step="detection", pct=0.30, msg="Detection started")
+        try:
+            color_results = self.detect_colors()
+            self.emit("detection_completed", step="detection", pct=0.55, msg="Detection completed")
+        except Exception as e:
+            self.emit("detection_failed", step="detection", pct=0.55, msg=str(e), err=repr(e))
+            raise            
         
         # ====================================================================
         # 4️⃣ CONVERSION EN FORMAT KOCIEMBA
         # ====================================================================
-        if solve_callback:
-            solve_callback("conversion_started")
-        
-        cube_string = self.convert_to_kociemba(color_results)
-        
-        if solve_callback:
-            solve_callback("conversion_completed")
-        
+        self.emit("conversion_started", step="conversion", pct=0.55, msg="Conversion to Kociemba started")
+        try:
+            cube_string = self.convert_to_kociemba(color_results)
+            self.emit("conversion_completed", step="conversion", pct=0.60,
+              msg="Conversion completed", cube_string=cube_string)
+        except Exception as e:
+            self.emit("conversion_failed", step="conversion", pct=0.60, msg=str(e), err=repr(e))
+            raise         
+
         # S'arrêter ici si pas de résolution demandée
         if not do_solve:
             return cube_string
@@ -431,14 +544,21 @@ class RobotCubeSolver:
         # ====================================================================
         # 5️⃣ RÉSOLUTION
         # ====================================================================
-        if solve_callback:
-            solve_callback("solving_started")
-        
-        solution = self.solve(cube_string)
-        
-        if solve_callback:
-            solve_callback("solving_completed")
-        
+        self.emit("solving_started", step="solve", pct=0.60, msg="Solving started (kociemba)")
+        try:
+            solution = self.solve(cube_string, method="kociemba")
+            moves_count = len(solution.split()) if solution else 0
+            self.emit("solving_completed", step="solve", pct=0.70,
+              msg="Solving completed", moves=moves_count,solution=solution)
+        except CubeAlreadySolved as e:
+            print(f"🟦 {e}")
+            self.emit("already_solved", step="solve", pct=0.70, msg=str(e), moves=0)
+            self.solution = ""
+            return cube_string, ""
+        except Exception as e:
+            self.emit("solving_failed", step="solve", pct=0.70, msg=str(e), err=repr(e))
+            raise
+                
         # S'arrêter ici si pas d'exécution demandée
         if not do_execute:
             return cube_string, solution
@@ -446,15 +566,22 @@ class RobotCubeSolver:
         # ====================================================================
         # 6️⃣ EXÉCUTION DES MOUVEMENTS
         # ====================================================================
-        if solve_callback:
-            solve_callback("execution_started")
+        ## self.emit("execution_started", step="execute", pct=0.70, msg="Execution started") ## Inutile déjà dans execute move
         
-        success = self.execute_moves(solution, execute_callback)
-        
-        if solve_callback:
-            status = "execution_completed" if success else "execution_stopped"
-            solve_callback(status)
-        
+        try:
+            success = self.execute_moves(solution)
+            if success:
+                    # self.emit("execution_completed", step="execute", pct=1.00, msg="Execution completed", success=True) ## Inutile déjà dans execute move
+                    print("🔍 Execution completed...")
+            else:
+                # stopped (stop_flag / erreur gérée / etc.)
+                # self.emit("execution_stopped", step="execute", pct=1.00, msg="Execution stopped", success=False) ## Inutile déjà dans execute move
+                print("🔍 Execution stopped...")
+        except Exception as e:
+            print(f"🔍 Execution failed: {e}")
+            self.emit("execution_failed", step="execute", pct=1.00, msg=str(e), err=repr(e)) ## Laissé
+            raise   
+
         return cube_string, solution
     
     # ========================================================================
@@ -479,26 +606,17 @@ class RobotCubeSolver:
 # TESTS
 # ============================================================================
 
+
 if __name__ == "__main__":
+    from progress_listeners import console_clean_listener, jsonl_file_listener, multi_listener
+
     print("="*60)
     print("TEST robot_solver.py")
     print("="*60)
-    
-    # Callbacks de test
-    def test_capture_callback(face, current, total, status):
-        print(f"  Capture [{current}/{total}] Face {face}: {status}")
-    
-    def test_detect_callback(face, current, total, status):
-        print(f"  Détection [{current}/{total}] Face {face}: {status}")
-    
-    def test_solve_callback(status):
-        print(f"  Pipeline: {status}")
-    
-    def test_execute_callback(current, total, move, next_move, status):
-        if status == "executing":
-            print(f"  Exécution [{current}/{total}] {move} (suivant: {next_move})")
-        elif status == "completed":
-            print(f"  ✅ [{current}/{total}] {move} terminé")
+
+    file_listener = jsonl_file_listener(folder="tmp", prefix="progress")
+    listener = multi_listener(console_clean_listener, jsonl_file_listener("debug_progress.jsonl"))
+    print("JSONL:", file_listener.path)
     
     # Test avec callbacks
     solver = RobotCubeSolver(image_folder="tmp", debug="text")
@@ -506,12 +624,9 @@ if __name__ == "__main__":
     try:
         cube_string, solution = solver.run(
             do_solve=True,
-            do_execute=False,  # Mettre True pour tester l'exécution
+            do_execute=False,
             auto_calibrate=True,
-            capture_callback=test_capture_callback,
-            detect_callback=test_detect_callback,
-            solve_callback=test_solve_callback,
-            execute_callback=test_execute_callback
+            progress_callback=listener
         )
         
         print("\n" + "="*60)

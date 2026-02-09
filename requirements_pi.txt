@@ -38,3 +38,6 @@ rpi_ws281x>=5.0.0
 # === Contrôle clavier matriciel (GPIO moderne) ===
 lgpio>=0.2.2
 gpiozero>=2.0
+
+# ECRAN TFT
+luma.lcd>=2.11.0
