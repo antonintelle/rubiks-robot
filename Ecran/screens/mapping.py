@@ -37,7 +37,7 @@ class MappingScreen(Screen):
         draw.text((174, 47),  "Total      : 00:07:48", font=self.gui.font_small, fill=BLACK)
 
 
-    def scan_cube():
+    def get_init_colors(self):
         """
         Simmule la récupération des couleurs depuis la caméra
 
@@ -54,9 +54,6 @@ class MappingScreen(Screen):
         GREEN = (0, 200, 0)
         YELLOW = (255, 255, 0)
         BLACK = (0, 0, 0)
-
-        from time import time
-        time.sleep(65)
 
         return {
             "U" : (ORANGE, ORANGE, ORANGE, ORANGE, ORANGE, ORANGE, ORANGE, ORANGE, ORANGE),

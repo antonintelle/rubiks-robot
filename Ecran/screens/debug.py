@@ -2,10 +2,10 @@ from .base import Screen, HEADER_HEIGHT, BLACK
 
 class DebugScreen(Screen):
     def __init__(self, gui):
-        super().__init__(gui, title="Debug")
+        super().__init__(gui)
 
         # Bouton retour en bas gauche (même position que power dans home)
-        x, y = self.get_position('ld', obj_size=(60, 30), margin=5)
+        x, y = 5,187
         self.btn_back = self.add_button(
             rect=(x, y, x + 60, y + 30),
             on_click=lambda: self.gui.set_screen("home")
@@ -52,7 +52,7 @@ class DebugScreen(Screen):
                       fill=(100, 100, 100), font=self.gui.font_small)
 
         # Bouton Retour (bas gauche)
-        x, y = self.get_position('ld', obj_size=(60, 30), margin=5)
+        x, y = 5,187
 
         # Fond si pressé
         if self.is_button_pressed(self.btn_back):
