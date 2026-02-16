@@ -32,6 +32,9 @@ dist/
 *.7z
 *.rar
 
+# --- Dossiers de test et de debug ---
+debug_utils/
+
 # --- Fichier temporaire local ---
 toto.txt
 
