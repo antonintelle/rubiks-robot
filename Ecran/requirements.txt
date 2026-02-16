@@ -1,6 +1,4 @@
 luma.lcd==2.11.0
 luma.core==2.5.2
-RPi.GPIO==0.7.1
-spidev==3.6
 Pillow==12.0.0
 psutil==7.1.3
