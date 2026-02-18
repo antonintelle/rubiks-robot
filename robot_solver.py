@@ -106,6 +106,10 @@ except ImportError:
     YOLO_AVAILABLE = False
     calibrate_roi_yolo = None
 
+class PipelineStopped(Exception):
+    """Arrêt demandé (E-STOP). Ce n’est pas une erreur."""
+    pass
+
 class CameraInterface:
     """Interface générique pour une caméra réelle"""
     
@@ -210,8 +214,9 @@ class RobotCubeSolver:
             #    debug=True
             #)
 
-            camera.lock_for_scan_multiface_cfg(flip_cb=flip_cb,debug=True)
-
+            self.check_stop("capture", 0.00)
+            camera.lock_for_scan_multiface_cfg(flip_cb=flip_cb, debug=True)
+            self.check_stop("capture", 0.02)
             self.emit("camera_lock_done",
                     step="capture",
                     face="LOCK",
@@ -257,6 +262,7 @@ class RobotCubeSolver:
         def snap(face):
             nonlocal current
             current += 1
+            self.check_stop("capture", pct_for(current))
 
             self.emit(
                 "capture_face",
@@ -285,27 +291,33 @@ class RobotCubeSolver:
                 msg=f"Captured {face} ({current}/{faces_total})"
             )      
         # U
+        self.check_stop("capture")
         snap("U")
 
         # B
+        self.check_stop("capture")
         flip_up()
         snap("B")
 
         # D
+        self.check_stop("capture")
         flip_up()
         snap("D")
 
         # F
+        self.check_stop("capture")
         flip_up()
         snap("F")
 
         # R
+        self.check_stop("capture")
         scan_yaw_out("D")  # ou "G"
         flip_up()
         scan_yaw_home()
         snap("R")
 
         # L
+        self.check_stop("capture")
         flip_up()
         flip_up()
         snap("L")
@@ -354,6 +366,7 @@ class RobotCubeSolver:
 
         # Simuler une progression "processing" pour l'UI
         for i, face in enumerate(faces, 1):
+            self.check_stop("detection", pct_for(i))
             self.emit(
                 "detect_face",
                 step="detection",
@@ -365,7 +378,9 @@ class RobotCubeSolver:
                 msg=f"Processing {face} ({i}/{total})"
             )
 
-        color_results: FacesDict = detect_colors_for_faces(self.image_folder, roi, color_calib, debug=self.debug,strict=True)
+        self.check_stop("detection", DET_START)
+        color_results: FacesDict = detect_colors_for_faces(self.image_folder, roi, color_calib, debug=self.debug, strict=True)
+        self.check_stop("detection", DET_END)
 
         # Avec progression : notifier chaque face
         # Note: detect_colors_for_faces traite toutes les faces d'un coup
@@ -405,7 +420,7 @@ class RobotCubeSolver:
             ValueError: si la conversion échoue
         """
         print("🔄 Conversion en format Kociemba...")
-        
+        self.check_stop("conversion", 0.55)
         ok, cube, err = convert_to_kociemba(
             color_results,
             mode="robot_cam",
@@ -439,6 +454,7 @@ class RobotCubeSolver:
     
     def solve(self, cube_string: str, method: str = "kociemba") -> str:
         print(f"🧩 Résolution du cube... (method={method})")
+        self.check_stop("solve", 0.60)
 
         cube_string = (cube_string or "").strip()
         SOLVED_URFDLB = "U"*9 + "R"*9 + "F"*9 + "D"*9 + "L"*9 + "B"*9
@@ -468,6 +484,7 @@ class RobotCubeSolver:
     
     def execute_moves(self, solution: str, start_mode="LUB"):
         print("▶️ Exécution des mouvements...")
+        self.check_stop("execute", 0.70)
         #input("Entrée pour continuer (stop si effort anormal) ")
 
         EXEC_START, EXEC_END = 0.70, 1.00
@@ -517,6 +534,11 @@ class RobotCubeSolver:
         # # Initialise la fonction de callback
         self.progress_callback = progress_callback
 
+        # # Test de l'arret
+        if self.stop_flag.is_set():
+            self.emit("pipeline_stopped", step="start", pct=0.0, msg="E-STOP already active")
+            raise PipelineStopped("E-STOP already active")
+
         # Réinitialiser le flag d'arrêt
         self.stop_flag.clear()
         
@@ -525,8 +547,12 @@ class RobotCubeSolver:
         # ====================================================================
         self.emit("capture_started", step="capture", pct=0.00, msg="Capture started")
         try:
+            self.check_stop("capture", 0.0)
             self.capture_images()
             self.emit("capture_completed", step="capture", pct=0.20, msg="Capture completed")
+        except PipelineStopped:
+            # STOP = pas une erreur => on remonte juste l'exception
+            raise            
         except Exception as e:
             self.emit("capture_failed", step="capture", pct=0.20, msg=str(e), err=str(e))
             raise
@@ -540,6 +566,9 @@ class RobotCubeSolver:
             try:
                 self.calibrate_roi_auto(show_preview=False)
                 self.emit("calibration_completed", step="calibration", pct=0.30, msg="Calibration completed")
+            except PipelineStopped:
+                # STOP = pas une erreur => on remonte juste l'exception
+                raise                  
             except Exception as e:
                 self.emit("calibration_failed", step="calibration", pct=0.30, msg=str(e), err=repr(e))
                 raise                
@@ -549,8 +578,12 @@ class RobotCubeSolver:
         # ====================================================================
         self.emit("detection_started", step="detection", pct=0.30, msg="Detection started")
         try:
+            self.check_stop("detection", 0.30)
             color_results = self.detect_colors()
             self.emit("detection_completed", step="detection", pct=0.55, msg="Detection completed")
+        except PipelineStopped:
+            # STOP = pas une erreur => on remonte juste l'exception
+            raise              
         except Exception as e:
             self.emit("detection_failed", step="detection", pct=0.55, msg=str(e), err=repr(e))
             raise            
@@ -560,9 +593,13 @@ class RobotCubeSolver:
         # ====================================================================
         self.emit("conversion_started", step="conversion", pct=0.55, msg="Conversion to Kociemba started")
         try:
+            self.check_stop("conversion", 0.55)
             cube_string = self.convert_to_kociemba(color_results)
             self.emit("conversion_completed", step="conversion", pct=0.60,
               msg="Conversion completed", cube_string=cube_string)
+        except PipelineStopped:
+            # STOP = pas une erreur => on remonte juste l'exception
+            raise                
         except Exception as e:
             self.emit("conversion_failed", step="conversion", pct=0.60, msg=str(e), err=repr(e))
             raise         
@@ -576,6 +613,7 @@ class RobotCubeSolver:
         # ====================================================================
         self.emit("solving_started", step="solve", pct=0.60, msg="Solving started (kociemba)")
         try:
+            self.check_stop("solve", 0.60)
             solution = self.solve(cube_string, method="kociemba")
             moves_count = len(solution.split()) if solution else 0
             self.emit("solving_completed", step="solve", pct=0.70,
@@ -585,6 +623,9 @@ class RobotCubeSolver:
             self.emit("already_solved", step="solve", pct=0.70, msg=str(e), moves=0)
             self.solution = ""
             return cube_string, ""
+        except PipelineStopped:
+            # STOP = pas une erreur => on remonte juste l'exception
+            raise              
         except Exception as e:
             self.emit("solving_failed", step="solve", pct=0.70, msg=str(e), err=repr(e))
             raise
@@ -599,6 +640,7 @@ class RobotCubeSolver:
         ## self.emit("execution_started", step="execute", pct=0.70, msg="Execution started") ## Inutile déjà dans execute move
         
         try:
+            self.check_stop("execute", 0.80)
             success = self.execute_moves(solution)
             if success:
                     # self.emit("execution_completed", step="execute", pct=1.00, msg="Execution completed", success=True) ## Inutile déjà dans execute move
@@ -607,6 +649,9 @@ class RobotCubeSolver:
                 # stopped (stop_flag / erreur gérée / etc.)
                 # self.emit("execution_stopped", step="execute", pct=1.00, msg="Execution stopped", success=False) ## Inutile déjà dans execute move
                 print("🔍 Execution stopped...")
+        except PipelineStopped:
+            # STOP = pas une erreur => on remonte juste l'exception
+            raise                  
         except Exception as e:
             print(f"🔍 Execution failed: {e}")
             self.emit("execution_failed", step="execute", pct=1.00, msg=str(e), err=repr(e)) ## Laissé
@@ -631,6 +676,11 @@ class RobotCubeSolver:
         self.stop_flag.clear()
         print("✅ Flag d'arrêt réinitialisé")
 
+    def check_stop(self, step: str = "", pct: float | None = None, msg: str = "E-STOP activated"):
+        if self.stop_flag.is_set():
+            self.emit("pipeline_stopped", step=step or "unknown", pct=pct, msg=msg)
+            raise PipelineStopped(msg)
+
 
 # ============================================================================
 # TESTS
@@ -645,7 +695,8 @@ if __name__ == "__main__":
     print("="*60)
 
     file_listener = jsonl_file_listener(folder="tmp", prefix="progress")
-    listener = multi_listener(console_clean_listener, jsonl_file_listener("debug_progress.jsonl"))
+    debug_listener = jsonl_file_listener(folder="tmp", prefix="debug_progress")
+    listener = multi_listener(console_clean_listener, file_listener, debug_listener)
     print("JSONL:", file_listener.path)
     
     # Test avec callbacks

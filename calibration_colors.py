@@ -94,6 +94,17 @@ from collections import Counter
 import numpy as np
 import cv2
 import math
+from config_manager import get_config
+
+# ============================================
+# CHARGEMENT DE LA CONFIGURATION
+# ============================================
+
+def _get_vision_mode() -> str:
+    cfg = get_config()
+    profile = cfg.get("camera.lock_profile_active", "")
+    profile = str(profile).lower()
+    return "night" if ("soir" in profile or "night" in profile) else "day"
 
 
 def _hue_deg_from_rgb(r: float, g: float, b: float) -> float:
@@ -915,7 +926,170 @@ def detect_risky_face(cells, margin: float = 0.25, debug: bool = False) -> bool:
 # -----------------------------
 # 2) Classify (Cubotino-like, simple)
 # -----------------------------
-def classify_color_cubotino_like(
+def classify_color_cubotino_like(cell_bgr, mode: str, margin=0.25, debug=False, shiny=False, yo_centers=None) -> str:
+    if mode == "night":
+        return classify_color_cubotino_like_night(cell_bgr, margin, debug, shiny, yo_centers)
+    return classify_color_cubotino_like_day(cell_bgr, margin, debug, shiny, yo_centers)
+
+# -----------------------------
+# 3) Analyze face (centre-fix + face-fix ultra conservateur)
+# -----------------------------
+
+def _rgb_dist(a, b):
+    return float(np.linalg.norm(np.array(a, dtype=np.float32) - np.array(b, dtype=np.float32)))
+
+def _get_calib_rgb(color_name: str):
+    calib = _get_color_calib_cached()
+    if not calib or color_name not in calib:
+        return None
+    r, g, b, _ = calib[color_name]
+    return (r, g, b)
+
+def analyze_colors_simple(cells, margin: float = 0.25, debug: bool = False):
+    shiny = detect_risky_face(cells, margin=margin, debug=debug)
+    yo_centers = _get_yo_lab_centers_cached()
+
+    mode = _get_vision_mode()
+    if debug:
+        print(f"[SIMPLE] mode={mode}")
+
+    raw = []
+    for ((i, j), cell) in cells:
+        raw.append(classify_color_cubotino_like(
+            cell,
+            mode=mode,
+            margin=margin,
+            debug=debug,
+            shiny=shiny,
+            yo_centers=yo_centers
+        ))
+
+    raw2 = raw[:]  # copie
+
+    # center fix uniquement si unknown
+    if raw2[4] == "unknown":
+        before = raw2[4]
+        raw2 = fix_center_by_majority(raw2)
+        if debug and raw2[4] != before:
+            print(f"[SIMPLE] CENTER-FIX: {before} -> {raw2[4]}")
+
+    # uniform fix ultra conservateur: 8 vs 1
+    cnt = Counter(raw2)
+    if len(cnt) == 2:
+        (maj, nmaj), (minc, nmin) = cnt.most_common(2)
+        if nmaj == 8 and nmin == 1 and maj != "unknown" and minc != "unknown":
+            bad_idx = next(i for i, c in enumerate(raw2) if c == minc)
+
+            bad_cell = cells[bad_idx][1]
+            r, g, b = sample_rgb_from_cell_bgr(bad_cell, margin=margin)
+
+            maj_rgb = _get_calib_rgb(maj)
+            min_rgb = _get_calib_rgb(minc)
+
+            if maj_rgb and min_rgb:
+                dmaj = _rgb_dist((r, g, b), maj_rgb)
+                dmin = _rgb_dist((r, g, b), min_rgb)
+
+                if dmaj + 10 < dmin:  # marge conservative
+                    if debug:
+                        print(f"[AUTO UNIFORM-FIX] cell {bad_idx+1}: {minc}->{maj} (dmaj={dmaj:.1f} < dmin={dmin:.1f})")
+                    raw2[bad_idx] = maj
+
+    # recalc après fix
+    cnt = Counter(raw2)
+
+    # face-fix YO (ton truc existant)
+    if (cnt["yellow"] + cnt["orange"]) >= 7 and 1 <= cnt["red"] <= 2:
+        fixed = []
+        for k, (((i, j), cell), col) in enumerate(zip(cells, raw2)):
+            if col == "red" and _is_fake_red_that_should_be_orange(cell, margin=margin):
+                fixed.append("orange")
+                if debug:
+                    print(f"[SIMPLE] FACE-FIX: red->orange on cell {k+1} (fake red)")
+            else:
+                fixed.append(col)
+        return fixed
+
+    return raw2
+
+#############################################################################
+# LEGACY
+#############################################################################
+
+def classify_color_cubotino_like_night(
+    cell_bgr: np.ndarray,
+    margin: float = 0.25,
+    debug: bool = False,
+    shiny: bool = False,
+    yo_centers=None,
+) -> str:
+    r, g, b = sample_rgb_from_cell_bgr(cell_bgr, margin=margin)
+    h_deg, s, v = _hsv_from_rgb(r, g, b)
+
+    # 1) WHITE
+    if s < 75 and v > 60:
+        if debug:
+            print(f"[SIMPLE] white via HSV | h={h_deg:.1f} s={s:.0f} v={v:.0f}")
+        return "white"
+
+    # Dark fallback
+    if v < 40:
+        if 80 <= h_deg < 170 and s > 80:
+            return "green"
+        return "unknown"
+
+    # 2) RED wrap (version NUIT: récupère h~344-349 sans casser l'orange)
+    # - Rouge "haut": h>=340
+    # - Rouge "bas": h<8 (comme avant)
+    # - Garde-fou orange: près de 0°, si le vert est trop présent -> orange
+    if h_deg >= 340 or h_deg < 8:
+        if h_deg < 8:
+            # orange typique: g relativement présent vs r
+            # (ratio plus robuste que seuil absolu)
+            if (g / max(r, 1)) > 0.22 and b < 110:
+                return "orange"
+
+        if not shiny:
+            return "red"
+
+        _, a_lab, b_lab = _lab_ab_from_cell(cell_bgr, margin=margin)
+        score = b_lab - a_lab
+        if debug:
+            print(f"[SIMPLE] red-zone shiny h={h_deg:.1f} Lab(a)={a_lab:.1f} Lab(b)={b_lab:.1f} (b-a)={score:.1f}")
+        return "orange" if score >= -8.0 else "red"
+
+    # 3) ORANGE / YELLOW
+    if 8 <= h_deg < 80:
+        if (yo_centers is not None) or shiny or (b < 25 and r > 220):
+            return _decide_yellow_orange_lab(cell_bgr, margin=margin, yo_centers=yo_centers, debug=debug)
+
+        if h_deg < 40:
+            return "orange"
+        if h_deg >= 55:
+            return "yellow"
+
+        rg = abs(r - g)
+        if (b < 20 and g > 170):
+            return "yellow"
+        if (rg < 35) and (b < 95):
+            return "yellow"
+        return "orange"
+
+    # 4) GREEN
+    if 80 <= h_deg < 170:
+        return "green"
+
+    # 5) BLUE
+    if 170 <= h_deg < 260:
+        if s < 115:
+            if debug:
+                print(f"[SIMPLE] blue-zone but low S={s:.0f} => WHITE")
+            return "white"
+        return "blue"
+
+    return "unknown"
+
+def classify_color_cubotino_like_day(
     cell_bgr: np.ndarray,
     margin: float = 0.25,
     debug: bool = False,
@@ -983,53 +1157,7 @@ def classify_color_cubotino_like(
     return "unknown"
 
 
-
-
-
-# -----------------------------
-# 3) Analyze face (centre-fix + face-fix ultra conservateur)
-# -----------------------------
-def analyze_colors_simple(cells, margin: float = 0.25, debug: bool = False):
-    shiny = detect_risky_face(cells, margin=margin, debug=debug)
-
-    yo_centers = _get_yo_lab_centers_cached()
-    raw = []
-    for ((i, j), cell) in cells:
-        #raw.append(classify_color_cubotino_like(cell, margin=margin, debug=debug, shiny=shiny))
-        raw.append(classify_color_cubotino_like(cell, margin=margin, debug=debug, shiny=shiny, yo_centers=yo_centers))
-
-
-    # centre fix UNIQUEMENT si unknown (logo/étiquette/reflet violent)
-    raw2 = raw
-    if raw[4] == "unknown":
-        raw2 = fix_center_by_majority(raw)
-        if debug and raw2[4] != raw[4]:
-            print(f"[SIMPLE] CENTER-FIX: {raw[4]} -> {raw2[4]}")
-
-    cnt = Counter(raw2)
-
-    # Face-fix ultra conservateur :
-    # seulement si la face est massivement YO,
-    # ET qu’on a 1-2 rouges max,
-    # ET que ces rouges ressemblent à un "orange collapse".
-    if (cnt["yellow"] + cnt["orange"]) >= 7 and 1 <= cnt["red"] <= 2:
-        fixed = []
-        for k, (((i, j), cell), col) in enumerate(zip(cells, raw2)):
-            if col == "red" and _is_fake_red_that_should_be_orange(cell, margin=margin):
-                fixed.append("orange")
-                if debug:
-                    print(f"[SIMPLE] FACE-FIX: red->orange on cell {k+1} (fake red)")
-            else:
-                fixed.append(col)
-        return fixed
-
-    return raw2
-
-#############################################################################
-# LEGACY
-#############################################################################
-
-def classify_color_cubotino_like_legacy(
+def classify_color_cubotino_like_legacy1(
     cell_bgr: np.ndarray,
     margin: float = 0.25,
     debug: bool = False,

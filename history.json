@@ -9162,5 +9162,1258 @@
     "success": true,
     "error": null,
     "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T14:35:17",
+    "operation": "Mode robot",
+    "success": true,
+    "error": null,
+    "message": "Pipeline robot termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T14:36:43",
+    "operation": "Mode robot",
+    "success": false,
+    "error": "Erreur en mode robot: \u00c9chec conversion: Validation basique \u00e9chou\u00e9e",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T14:37:10",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T14:37:27",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T14:37:39",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T14:38:08",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T14:41:48",
+    "operation": "Mode robot",
+    "success": false,
+    "error": "Erreur en mode robot: \u00c9chec conversion: Validation basique \u00e9chou\u00e9e",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T14:42:19",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T14:42:38",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T14:44:27",
+    "operation": "Calib zones",
+    "success": true,
+    "error": null,
+    "message": "Calibration des zones termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T14:45:46",
+    "operation": "Mode robot",
+    "success": true,
+    "error": null,
+    "message": "Pipeline robot termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T14:50:19",
+    "operation": "Mode robot",
+    "success": false,
+    "error": "Erreur en mode robot: \u00c9chec conversion: Validation basique \u00e9chou\u00e9e",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T14:51:22",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T14:52:22",
+    "operation": "Mode robot",
+    "success": false,
+    "error": "Erreur en mode robot: \u00c9chec conversion: Validation basique \u00e9chou\u00e9e",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T15:25:17",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:25:26",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:25:34",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:25:44",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:25:53",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:26:01",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:27:19",
+    "operation": "Calib zones",
+    "success": true,
+    "error": null,
+    "message": "Calibration des zones termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:27:26",
+    "operation": "API debug",
+    "success": false,
+    "error": "Validation basique \u00e9chou\u00e9e",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T15:27:35",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:27:42",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:27:50",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:27:59",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:28:14",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:46:04",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:46:15",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:46:25",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:46:38",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T15:46:49",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T16:40:08",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T16:40:17",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T16:40:25",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T16:40:35",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T16:40:44",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T16:40:53",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T16:48:31",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T16:48:39",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T16:48:48",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T16:48:56",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T16:49:06",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T16:49:16",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T16:49:30",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T16:51:01",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:11:03",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:11:12",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:11:20",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:11:28",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:11:36",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:11:46",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:13:04",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:21:20",
+    "operation": "Mode robot",
+    "success": false,
+    "error": "Erreur en mode robot: \u00c9chec conversion: Validation basique \u00e9chou\u00e9e",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T17:21:30",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:21:40",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:21:48",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:21:57",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:22:05",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:22:13",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:23:13",
+    "operation": "Mode robot",
+    "success": false,
+    "error": "Erreur en mode robot: \u00c9chec conversion: Validation basique \u00e9chou\u00e9e",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T17:23:40",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:23:47",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:23:56",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:24:04",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:24:12",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:24:20",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:24:32",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:24:48",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:25:02",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:25:11",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:25:22",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:25:34",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:25:46",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:29:07",
+    "operation": "Mode robot",
+    "success": false,
+    "error": "Erreur en mode robot: \u00c9chec conversion: Validation basique \u00e9chou\u00e9e",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T17:29:21",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:33:36",
+    "operation": "Mode robot",
+    "success": true,
+    "error": null,
+    "message": "Pipeline robot termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T17:33:55",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:34:03",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:34:12",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:34:21",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:34:30",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:34:39",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:38:28",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:40:41",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:43:33",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:43:46",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:45:47",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:46:10",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:46:19",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:46:29",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:46:38",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T17:46:47",
+    "operation": "Debug vision",
+    "success": true,
+    "error": null,
+    "message": "Debug vision et rotations termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T17:47:12",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:45:31",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:45:37",
+    "operation": "Debug vision",
+    "success": true,
+    "error": null,
+    "message": "Debug vision et rotations termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T18:45:57",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:47:31",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:47:39",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:47:49",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:47:58",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:48:06",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:48:14",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:50:16",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:50:28",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:50:36",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:50:45",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:52:26",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:52:34",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:52:41",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:52:49",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:52:56",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:53:03",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:53:13",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:53:17",
+    "operation": "Debug vision",
+    "success": true,
+    "error": null,
+    "message": "Debug vision et rotations termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T18:53:37",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:55:09",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:55:13",
+    "operation": "Debug vision",
+    "success": true,
+    "error": null,
+    "message": "Debug vision et rotations termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T18:55:29",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T18:59:31",
+    "operation": "Debug face ",
+    "success": false,
+    "error": "Face invalide: . Utilisez F, R, B, L, U ou D",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T19:00:48",
+    "operation": "Mode robot",
+    "success": false,
+    "error": "Erreur en mode robot: \u00c9chec conversion: Validation basique \u00e9chou\u00e9e",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T19:01:03",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T19:01:06",
+    "operation": "Debug vision",
+    "success": true,
+    "error": null,
+    "message": "Debug vision et rotations termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T19:05:21",
+    "operation": "Debug vision",
+    "success": true,
+    "error": null,
+    "message": "Debug vision et rotations termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T19:07:35",
+    "operation": "Mode robot",
+    "success": false,
+    "error": "Erreur en mode robot: \u00c9chec conversion: Validation basique \u00e9chou\u00e9e",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T19:07:41",
+    "operation": "Debug vision",
+    "success": true,
+    "error": null,
+    "message": "Debug vision et rotations termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T19:08:00",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T19:15:25",
+    "operation": "Debug vision",
+    "success": true,
+    "error": null,
+    "message": "Debug vision et rotations termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T19:15:48",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T19:17:35",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T19:17:44",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T19:17:52",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T19:18:00",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T19:18:09",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T19:18:21",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T20:11:09",
+    "operation": "Debug vision",
+    "success": true,
+    "error": null,
+    "message": "Debug vision et rotations termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T20:11:59",
+    "operation": "Debug face F",
+    "success": false,
+    "error": "Erreur lors du debug de la face: 'Config' object has no attribute 'camera'",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T20:13:14",
+    "operation": "Debug vision",
+    "success": true,
+    "error": null,
+    "message": "Debug vision et rotations termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T20:16:24",
+    "operation": "Debug vision",
+    "success": true,
+    "error": null,
+    "message": "Debug vision et rotations termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T20:39:34",
+    "operation": "Debug vision",
+    "success": true,
+    "error": null,
+    "message": "Debug vision et rotations termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T20:39:48",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T20:39:58",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T20:40:08",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T20:41:19",
+    "operation": "Mode robot",
+    "success": false,
+    "error": "Erreur en mode robot: \u00c9chec conversion: Validation basique \u00e9chou\u00e9e",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T20:41:34",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T20:41:45",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T20:41:54",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T20:42:10",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T20:42:24",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T20:42:37",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T20:43:23",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T20:43:42",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T20:43:53",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T20:44:04",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T20:44:16",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T20:45:58",
+    "operation": "Mode robot",
+    "success": true,
+    "error": null,
+    "message": "Pipeline robot termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T21:07:41",
+    "operation": "Mode robot",
+    "success": false,
+    "error": "Erreur en mode robot: \u00c9chec conversion: Validation basique \u00e9chou\u00e9e",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T21:07:56",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T21:08:08",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T21:09:10",
+    "operation": "Mode robot",
+    "success": false,
+    "error": "Erreur en mode robot: \u00c9chec conversion: Validation basique \u00e9chou\u00e9e",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T21:09:28",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T21:09:39",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T21:09:48",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T21:09:57",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T21:10:07",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T21:10:22",
+    "operation": "Debug face U",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face U termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T21:10:33",
+    "operation": "Debug face D",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face D termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T21:10:45",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T21:10:59",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T21:11:11",
+    "operation": "Debug face L",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face L termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T21:12:59",
+    "operation": "Mode robot",
+    "success": false,
+    "error": "Erreur en mode robot: \u00c9chec conversion: Validation basique \u00e9chou\u00e9e",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T21:13:03",
+    "operation": "Debug vision",
+    "success": true,
+    "error": null,
+    "message": "Debug vision et rotations termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T21:14:59",
+    "operation": "Mode robot",
+    "success": false,
+    "error": "Erreur en mode robot: \u00c9chec conversion: Validation basique \u00e9chou\u00e9e",
+    "message": null
+  },
+  {
+    "timestamp": "2026-02-18T21:15:10",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T21:17:24",
+    "operation": "Mode robot",
+    "success": true,
+    "error": null,
+    "message": "Pipeline robot termin\u00e9"
+  },
+  {
+    "timestamp": "2026-02-18T22:04:21",
+    "operation": "Debug face F",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face F termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T22:04:29",
+    "operation": "Debug face R",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face R termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T22:04:39",
+    "operation": "Debug face B",
+    "success": true,
+    "error": null,
+    "message": "Analyse de la face B termin\u00e9e"
+  },
+  {
+    "timestamp": "2026-02-18T22:04:42",
+    "operation": "Debug face ",
+    "success": false,
+    "error": "Face invalide: . Utilisez F, R, B, L, U ou D",
+    "message": null
   }
 ]

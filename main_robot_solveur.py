@@ -68,6 +68,8 @@ import time
 import threading
 from dataclasses import dataclass
 from colorama import init, Fore, Style
+from rbx_ui_state_store import RBXScreenStateStore
+from rbx_ui_listener import make_rbx_ui_listener
 
 init(autoreset=True)
 
@@ -136,6 +138,7 @@ def main(
     debug: str = DEBUG,
     do_solve: bool = DO_SOLVE,
     do_execute: bool = DO_EXECUTE,
+    extra_listeners=None,
 ):
     banner()
     os.makedirs(tmp_folder, exist_ok=True)
@@ -160,6 +163,9 @@ def main(
     from tft_driver import ConsoleTFTFile
     from tft_listener import make_tft_listener
 
+    from rbx_ui_state_store import RBXScreenStateStore
+    from rbx_ui_listener import make_rbx_ui_listener
+
     # TFT "fichier" (ou remplace par le vrai driver TFT)
     tft = ConsoleTFTFile(path=f"{tmp_folder}/tft_screen.txt", width=24)
     tft_listener = make_tft_listener(tft, min_refresh_s=0.15, max_line_len=24)
@@ -167,25 +173,34 @@ def main(
     # JSONL
     file_listener = jsonl_file_listener(folder=tmp_folder, prefix="progress")
 
-    # Listener bouton -> injecte l'état pause/stop dans les events (utile pour affichage TFT)
+    # Listener bouton -> injecte l'état pause/stop dans les events
     def inject_button_state(event: str, data: dict) -> None:
         data["btn_pause"] = control.pause
         data["btn_stop"] = control.stop
 
-    # Multi-listener final
-    listener = multi_listener(
+    # RBX (état écran)
+    rbx_store = RBXScreenStateStore()
+    rbx_listener = make_rbx_ui_listener(rbx_store)
+
+    # ✅ Construire la LISTE, puis extend, puis multi_listener
+    listeners = [
         inject_button_state,
         console_clean_listener,
         file_listener,
         tft_listener,
-    )
+        rbx_listener,
+    ]
+
+    if extra_listeners:
+        listeners.extend(extra_listeners)
+
+    listener = multi_listener(*listeners)
+
     # ========= PIPELINE =========
-    from robot_solver import RobotCubeSolver  # <-- adapte à ton import réel
+    from robot_solver import RobotCubeSolver
 
     solver = RobotCubeSolver(image_folder=tmp_folder, debug=debug)
 
-    # Option minimale: on laisse solver.run() gérer capture/process/solve/execute
-    # MAIS: si stop est demandé, on force do_execute=False avant d'appeler run.
     if control.stop:
         do_execute = False
 
@@ -196,15 +211,15 @@ def main(
             progress_callback=listener
         )
 
-        # Selon ton API: si do_solve True => (cubestring, solution), sinon cubestring
+        print("[RBX_UI FINAL]", rbx_store.get())
+
         if do_solve:
             cubestring, solution = result
         else:
             cubestring, solution = result, ""
 
-        # Si stop a été demandé pendant la run, on évite toute exécution post-run
         if control.stop:
-            print(Fore.YELLOW + "🛑 STOP demandé (bouton). Fin immédiate (pas d'étape supplémentaire).")
+            print(Fore.YELLOW + "🛑 STOP demandé (bouton). Fin immédiate.")
 
         elapsed = time.perf_counter() - start_time
         print(Fore.CYAN + "\n" + "=" * 60)
@@ -213,18 +228,16 @@ def main(
         print(Fore.CYAN + f"CubeString: {cubestring}")
         if solution:
             print(Fore.CYAN + f"Solution:   {solution}")
-        # file_listener a souvent un .path (selon ton implémentation)
         print(Fore.CYAN + f"TFT output:  {tmp_folder}/tft_screen.txt")
         print(Fore.CYAN + f"JSONL log:   {getattr(file_listener, 'path', '(voir tmp)')}")
 
     except Exception as e:
         elapsed = time.perf_counter() - start_time
         print(Fore.RED + f"\n❌ Échec en {elapsed:.2f}s : {e}")
+        print("[RBX_UI FINAL - on error]", rbx_store.get())
 
     finally:
-        # Optionnel: nettoyage GPIO (gpiozero gère proprement en général)
         pass
-
 
 if __name__ == "__main__":
     main()

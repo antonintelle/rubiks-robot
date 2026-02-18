@@ -36,7 +36,7 @@
   "camera": {
     "resolution": [1280, 720],
     "rotation": 270,
-    "lock_profile_active": "ambiance_avec_leds_journee_2",
+    "lock_profile_active": "ambiance_avec_leds_journee",
 
     "lock_base": {
       "n_samples": 4,
@@ -74,18 +74,18 @@
       "min_gain": 0.0,
       "max_gain": 8.0,
       "min_exp": 3000,
-      "max_exp": 33000,
+      "max_exp": 33333,
       "n_samples": 4,
       "per_pose_timeout_s": 2.2,
       "stability_pts": 10,
-      "tol": 0.05,
+      "tol": 0.06,
       "ae_metering": "matrix",
       "awb_mode": "auto",
       "reject_sat_pct": 6.0,
       "led_scan": {
         "anneau1": { "enabled": true, "brightness": 0.34, "preset": "white" },
         "anneau2": { "enabled": true, "brightness": 0.04, "preset": "white" }
-        }      
+      }
     },
       "ambiance_avec_leds_lumineux": {
         "ev": -0.1,
@@ -145,7 +145,7 @@
       },
 
       "soir_plafond_leds_dim": {
-        "ev": 0.0,
+        "ev": -0.1,
         "min_gain": 0.8,
         "max_gain": 12.0,
         "min_exp": 6000,
@@ -156,10 +156,10 @@
         "tol": 0.06,
         "ae_metering": "centreweighted",
         "awb_mode": "auto",
-        "reject_sat_pct": 4.0,
+        "reject_sat_pct": 6.0,
         "led_scan": {
-          "anneau1": { "enabled": true, "brightness": 0.34, "preset": "white" },
-          "anneau2": { "enabled": true, "brightness": 0.04, "preset": "white" }
+          "anneau1": { "enabled": true, "brightness": 0.32, "preset": "neutral_warm" },
+          "anneau2": { "enabled": true, "brightness": 0.06, "preset": "neutral_warm" }
         }
       },
 
@@ -230,6 +230,24 @@
         "led_scan": {
           "anneau1": { "enabled": true, "brightness": 0.34, "preset": "white" },
           "anneau2": { "enabled": true, "brightness": 0.04, "preset": "white" }
+        }
+      },
+      "soir_indirect_tres_sombre": {
+        "ev": 0.0,
+        "min_gain": 0.8,
+        "max_gain": 12.0,
+        "min_exp": 8000,
+        "max_exp": 33333,
+        "n_samples": 4,
+        "per_pose_timeout_s": 2.2,
+        "stability_pts": 10,
+        "tol": 0.06,
+        "ae_metering": "centreweighted",
+        "awb_mode": "auto",
+        "reject_sat_pct": 6.0,
+        "led_scan": {
+          "anneau1": { "enabled": true, "brightness": 0.32, "preset": "neutral_warm" },
+          "anneau2": { "enabled": true, "brightness": 0.08, "preset": "neutral_warm" }
         }
       }
     }
