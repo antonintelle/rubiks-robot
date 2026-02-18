@@ -1,88 +1,78 @@
-# processing_rubiks.py
-# Corps princpal permettant d'encoder l'état principal du cube pour que il soit
-# interpretable par le solveur kociemba convert_to_kociemba
-# il prend en entrée un cube encodé FacesDict
-# il contien aussi des fonctions de debug
+#!/usr/bin/env python3
 # ============================================================================
 #  processing_rubiks.py
 #  --------------------
 #  Objectif :
-#     Module central pour transformer les résultats de vision (FacesDict)
-#     en un encodage standard Singmaster (chaîne 54 URFDLB) utilisable
-#     par le solveur de type Kociemba.
+#     Module central de **post-traitement Rubik’s** : transformer les résultats de
+#     vision (FacesDict : 6 faces × 9 couleurs) en une chaîne **Singmaster/Kociemba**
+#     standard (54 caractères, ordre URFDLB) utilisable par un solveur (Kociemba).
+#     Le fichier inclut aussi de nombreux outils de debug/validation pour diagnostiquer
+#     les erreurs de vision, de rotations (repère robot), ou d’ordre des faces.
 #
-#  Étapes principales :
-#     1) Correction orientation robot :
-#        - apply_robot_orientation_corrections
-#        - rotate_face_grid / rotate_cells_grid
-#     2) Réorientation standard Kociemba :
-#        - reorient_cube_for_kociemba
-#     3) Encodage des faces :
-#        - create_color_mapping : centre → lettre
-#        - encode_with_mapping  : couleurs → URFDLB
-#        - validate_cube_string : validation basique
-#        - opposite_edges / edge_pairs_multiset : diagnostics avancés
-#     4) Conversion finale :
-#        - convert_to_kociemba : FacesDict → chaîne 54
-#     5) Orchestration :
-#        - production_mode : Vision + Encodage + Sauvegarde
-#        - process_rubiks_to_singmaster : API principale
+#  Entrées principales :
+#     - process_rubiks_to_singmaster(image_folder="tmp", calibration_file=None,
+#                                    debug="text", mode="robot_cam",
+#                                    strategy="center_hsv", save=True,
+#                                    return_faces=False) -> Dict[str, Any]
+#         API “dossier d’images -> résultat” :
+#           * vérifie la présence des 6 images {F,R,B,L,U,D}.jpg
+#           * charge la calibration ROI (rubiks_calibration.json)
+#           * exécute la vision (detect_colors_for_faces)
+#           * convertit en cubestring URFDLB (convert_to_kociemba)
+#           * retourne {"success": bool, "singmaster": str|None, "error": str|None, ...}
 #
-#  Fonctions utilitaires :
-#     - save_singmaster_file : sauvegarde txt/json
-#     - _normalize_cube / _split_full_urfdlb : formats intermédiaires
+#     - production_mode(roi_data=None, image_folder="tmp", mode="robot_cam",
+#                       debug="text", save=True, return_faces=False) -> Dict[str, Any]
+#         Orchestration “pipeline complet” en 2 phases :
+#           1) Vision (FacesDict)
+#           2) Encodage (URFDLB 54)
+#         + gestion des erreurs (faces manquantes, validation échouée).
 #
-#  Fonctions debug & test :
-#     - quick_pipeline_test_corrected : test pipeline complet + solveur
-#     - debug_color_mapping : diagnostic mapping couleur → lettre
-#     - debug_vision_step1  : vérification vision (54 stickers, 6×9)
-#     - debug_rotation_step2: vérification rotations
-#     - print_face_grids    : affichage grilles 3×3
-#     - full_debug_pipeline : vision + rotation + comparaison cube réel
-#     - debug_compare_with_physical_cube : guide de validation manuelle
+#     - convert_to_kociemba(color_results, mode="robot_cam", yaw=0, debug=False)
+#         Façade de conversion FacesDict -> cubestring via la nouvelle implémentation
+#         (_convert_to_kociemba_new).
 #
-#  Entrées :
-#     - FacesDict issu de process_images_cube.detect_colors_for_faces
-#     - Calibration ROI (rubiks_calibration.json)
-#     - Calibration couleurs (rubiks_color_calibration.json)
+#  Étapes clés de conversion (pipeline interne) :
+#     1) Correction repère robot :
+#        - apply_robot_orientation_corrections(..., mode="robot_cam"|"robot_raw"|...)
+#          Applique des rotations 0/90/180/270° face par face (rotate_face_grid / rotate_cells_grid)
+#          pour remettre les grilles 3×3 dans le bon sens.
+#
+#     2) Réorientation “Kociemba” :
+#        - reorient_cube_for_kociemba(corrected, yaw=0|90|180|270)
+#          Réordonne les faces (F/R/B/L) selon un yaw global autour de U/D.
+#
+#     3) Encodage 54 caractères :
+#        - create_color_mapping : construit le mapping couleur -> lettre (centre de chaque face)
+#        - encode_with_mapping  : convertit les 9 couleurs de chaque face en lettres URFDLB
+#        - validate_cube_string : validation basique (54 chars, 6 centres URFDLB, 9× chaque lettre)
+#
+#     4) Diagnostics avancés (debug) :
+#        - opposite_edges : détecte des arêtes impossibles (couleurs opposées collées)
+#        - edge_pairs_multiset : détecte arêtes manquantes / dupliquées
+#
+#  Debug & tests :
+#     - quick_pipeline_test_corrected(...) : exécute vision + encodage + appel solveur (solve_cube)
+#     - debug_vision_step1(...)            : vérifie 54 stickers, 6×9 et comptages couleurs
+#     - debug_rotation_step2(...)          : vérifie que rotations préservent centres + comptages
+#     - print_face_grids(...)              : affiche les grilles 3×3 en console
+#     - full_debug_pipeline()              : enchaîne vision + rotations + guide de vérification
+#     - debug_compare_with_physical_cube() : checklist de comparaison avec cube réel
+#
+#  Dépendances / intégration :
+#     - calibration_rubiks.load_calibration : ROI
+#     - process_images_cube.detect_colors_for_faces : vision -> FacesDict
+#     - solver_wrapper.solve_cube : résolution (pour tests)
+#     - types_shared : FaceResult, FacesDict
+#
+#  Entrées attendues :
+#     - Images : <image_folder>/{F,R,B,L,U,D}.jpg
+#     - Calibration ROI : rubiks_calibration.json
+#     - (Option) Calibration couleurs : actuellement désactivée (color_calibration=None)
 #
 #  Sorties :
-#     - Chaîne Singmaster 54 caractères (URFDLB)
-#     - Fichiers txt/json avec métadonnées
-#
-# ============================================================================
-# ============================================================================
-#  Pipeline visuel (schéma simplifié)
-#
-#         Images (6 faces, F/R/B/L/U/D)
-#                       │
-#                       ▼
-#        detect_colors_for_faces (vision)
-#              → FacesDict (couleurs 3×3)
-#                       │
-#                       ▼
-#      apply_robot_orientation_corrections
-#        (rotation selon mode robot/phone)
-#                       │
-#                       ▼
-#          reorient_cube_for_kociemba
-#       (réordonne les faces pour Kociemba)
-#                       │
-#                       ▼
-#           encode_with_mapping
-#      (mapping couleur → URFDLB, 54 chars)
-#                       │
-#                       ▼
-#           validate_cube_string
-#       + opposite_edges / edge_pairs_multiset
-#         (diagnostic de cohérence)
-#                       │
-#                       ▼
-#         convert_to_kociemba (final)
-#          → Chaîne Singmaster 54
-#                       │
-#                       ▼
-#       save_singmaster_file (txt/json)
+#     - Chaîne “Singmaster/Kociemba” 54 caractères (URFDLB)
+#     - (Option) Fichier rubiks_singmaster.txt (+ JSON metadata si activé)
 # ============================================================================
 
 import os, json, datetime as dt

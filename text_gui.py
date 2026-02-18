@@ -3,12 +3,21 @@
 # text_gui.py - Interface texte principale du système Rubik's Cube
 # =============================================================================
 # RÉSUMÉ :
-#   Interface texte moderne et modulaire pour piloter toutes les opérations du
-#   système de reconnaissance, de calibration, de vision, de conversion Kociemba,
-#   de résolution et de pilotage robotisé du Rubik's Cube.
+#   Interface texte “moderne” et modulaire pour piloter toutes les opérations du
+#   système Rubik’s Cube : calibrations, capture, vision/debug, conversion vers
+#   cubestring Kociemba (URFDLB), résolution, exécution robot, tests matériels
+#   et utilitaires.
 #
-#   Cette version repose sur le module `rubiks_operations` pour exécuter les
-#   traitements réels, séparant ainsi la logique métier de l’interface utilisateur.
+#   Cette interface délègue toute la logique métier au module `rubiks_operations`
+#   (classe RubiksOperations), ce qui sépare clairement :
+#     - UI console (menus, affichage, prompts)  -> text_gui.py
+#     - traitements réels (vision/solve/robot)  -> rubiks_operations.py
+#
+#   Composants :
+#     - Display : helpers d’affichage (header/sections/success/error/warning/info)
+#       + affichage “joli” des dict de résultats.
+#     - HistoryManager : historique des actions dans history.json (show/add/load/save).
+#     - RubiksTextGUI : boucle principale (menu -> dispatch handlers -> historique).
 #
 #   Structure du menu :
 #   ---------------------------------------------------------------------------
@@ -16,39 +25,46 @@
 #           c1 - Statut des calibrations
 #           c2 - Calibration des couleurs
 #           c3 - Calibration des zones (ROI)
+#           c4 - Calibration des blancs (AWB) (option)
+#
 #       [CAPTURE]
 #           i1 - Capture d'images
 #           i2 - Capture d'images avec robot
+#
 #       [VISION]
 #           v1 - Diagnostic couleurs
 #           v2 - Debug vision et rotations
 #           v3 - Debug face spécifique
+#
 #       [CONVERSION KOCIEMBA]
 #           k1 - Traiter le cube (mode graphique)
 #           k2 - Traiter le cube (mode texte)
 #           k3 - Traiter le cube (mode silencieux)
 #           k4 - Mode API debug
+#
 #       [RESOLUTION]
 #           r1 - Résoudre un cube seul (chaîne)
+#
 #       [PIPELINE]
 #           p1 - Test pipeline rapide
-#           p2 - Mode robot complet
+#           p2 - Mode robot complet (sans exécution)
+#           p3 - Mode robot complet (avec exécution)
+#
 #       [TESTS GPIO]
 #           g1 - Lancer le menu de l’anneau lumineux
-#       [MOUVEMENTS ROBOT]
-#           (vide)
-#       [ROBOT]
-#           (vide)
+#           g2 - Menu TFT (tests)
+#           g3 - Forcer LEDs OFF
+#
+#       [ROBOT / MOUVEMENTS]
+#           ro1 - Test moteur/servos
+#           ro2 - Test mouvements robot (saisie Singmaster)
+#
 #       [UTILITAIRES]
 #           u1 - Nettoyer fichiers temporaires
 #           u2 - Informations système
 #           u3 - Voir l'historique
 #           q  - Quitter
 #
-# =============================================================================
-# AUTEUR  : Projet Rubik's Cube
-# VERSION : 2.1
-# DATE    : 2025-10-25
 # =============================================================================
 
 import sys
@@ -173,9 +189,9 @@ class RubiksTextGUI:
 
         print(Fore.MAGENTA + "[CALIBRATION]" + Style.RESET_ALL)
         print(" c1 - Statut des calibrations")
-        print(" c2 - Calibration des couleurs")
+        #print(" c2 - Calibration des couleurs")
         print(" c3 - Calibration des zones (ROI)")
-        print(" c4 - Calibration des blancs")
+        #print(" c4 - Calibration des blancs")
         print(Fore.MAGENTA + "[CAPTURE]" + Style.RESET_ALL)
         print(" i1 - Capture d'images")
         print(" i2 - Capture d'images avec robot")
@@ -342,6 +358,15 @@ class RubiksTextGUI:
         self.history.add(f"Debug face {face}", result)
         Display.success(result["message"]) if result["success"] else Display.error(result["error"])
 
+    def open_url(self, url):
+        """Affiche l'URL au lieu d'essayer de l'ouvrir"""
+        print("\n" + "="*70)
+        print("🔗 URL de visualisation du cube:")
+        print(f"   {url}")
+        print("="*70)
+        print("\n💡 Copie cette URL dans Chromium pour voir la solution animée\n")
+        return True
+
     def handle_solve_cube(self):
         Display.section("RÉSOLUTION D’UN CUBE")
         cube_defaut = "LUULUULLBLFFURUURUFFDFFLFFLRRFDDDRRRBBDDLDDLDRRUBBBBBB"
@@ -362,7 +387,7 @@ class RubiksTextGUI:
             if url_requested:
                 url = (result.get("data") or {}).get("url")
                 if url:
-                    webbrowser.open(url)
+                    self.open_url(url)
                 else:
                     Display.error("URL demandée mais absente du résultat (clé 'url' manquante).")
         else:

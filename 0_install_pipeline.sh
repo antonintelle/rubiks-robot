@@ -1,13 +1,78 @@
 #!/bin/bash
-# ============================================================
-#  0_install_pipeline.sh (v6.0)
-#  Installation complète du pipeline Rubik's Cube - Raspberry Pi
+# ============================================================================
+#  0_install_pipeline.sh  (v6.0)
+#  -----------------------------
+#  Objectif :
+#     Script d’installation **complète** du pipeline Rubik’s Cube sur Raspberry Pi.
+#     Il automatise :
+#       - l’installation des dépendances système (apt),
+#       - la création / mise à jour d’un venv réutilisable,
+#       - l’installation des dépendances Python (requirements_pi.txt),
+#       - l’activation des services matériels (pigpiod, SPI),
+#       - des vérifications rapides (caméra, Tkinter, TFT),
+#       - la préparation des dossiers de travail (tmp/logs/captures) + permissions.
 #
-#  ✅ Réentrant (mode rapide --fast)
-#  ✅ Choix interactif : réinstallation complète ou mise à jour
-#  ✅ Utilise requirements_pi.txt
-#  ✅ Exécute check_dependencies.py
-# ============================================================
+#  Points forts :
+#     ✅ Réentrant : supporte réinstallation complète ou mise à jour (venv conservé)
+#     ✅ Mode rapide : --fast (saute apt update/upgrade)
+#     ✅ Compatible Bookworm : utilise lgpio / picamera2 / libcamera
+#     ✅ Post-check : exécute check_dependencies.py en fin d’installation
+#
+#  Usage :
+#     - Installation standard :
+#         ./0_install_pipeline.sh
+#     - Installation rapide (sans update/upgrade système) :
+#         ./0_install_pipeline.sh --fast
+#
+#  Étapes principales du script :
+#     0) Choix utilisateur :
+#        - [1] réinstaller (supprime $HOME/rubik-env)
+#        - [2] mettre à jour (réutilise le venv existant)
+#
+#     1) (Optionnel) Mise à jour système :
+#        - sudo apt update && sudo apt full-upgrade  (sauf --fast)
+#
+#     2) Installation paquets système :
+#        - Python + venv + pip
+#        - OpenCV / NumPy / Matplotlib / Tkinter
+#        - Picamera2 / libcamera / rpicam-apps
+#        - GPIO : gpiozero, lgpio, pigpio (+ service pigpiod)
+#        - SPI + drivers (spidev, RPi.GPIO) + outils (dos2unix, git, curl…)
+#
+#     3) Environnement virtuel :
+#        - Création/activation du venv : $HOME/rubik-env
+#        - include-system-site-packages = true (pour réutiliser paquets apt)
+#
+#     4) Dépendances Python :
+#        - pip/setuptools/wheel upgrade
+#        - pip install -r requirements_pi.txt (fallback si absent)
+#
+#     5) Nettoyage doublons :
+#        - pip uninstall numpy/matplotlib/opencv-python/picamera2 (best-effort)
+#
+#     6) Vérifications rapides :
+#        - Caméra : rpicam-hello
+#        - Import NumPy/Picamera2
+#        - Tkinter : création/destruction fenêtre
+#        - TFT ST7735 : import luma.lcd (si installé)
+#
+#     7) Normalisation des fins de ligne :
+#        - dos2unix sur *.py et *.sh
+#
+#     8) Vérification dépendances projet :
+#        - python3 check_dependencies.py (best-effort)
+#
+#     9) Dossiers de travail :
+#        - crée tmp/, logs/, captures/
+#        - corrige owner (root -> $USER) + permissions (755) + test écriture
+#
+#  Sortie / fin :
+#     - Rappelle comment lancer :
+#         ./main_text_gui.sh
+#         ./main_gui_robot.sh
+#     - Affiche le chemin du venv.
+# ============================================================================
+
 
 set -e
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -80,7 +145,9 @@ sudo apt install -y \
   rpicam-apps \
   python3-spidev \
   python3-rpi.gpio \
-  python3-lgpio
+  python3-lgpio \
+  python3-pigpio \
+  pigpio
 
 echo "🔧 Activation de pigpiod au démarrage..."
 sudo systemctl enable pigpiod
@@ -185,6 +252,49 @@ if [ -f "$BASE_DIR/check_dependencies.py" ]; then
 else
     echo "⚠️ check_dependencies.py manquant, vérification sautée."
 fi
+
+# ------------------------------------------------------------
+# 9️⃣  Création des dossiers de travail avec bonnes permissions
+# ------------------------------------------------------------
+echo
+echo "📁 Création des dossiers de travail..."
+
+# Liste des dossiers nécessaires
+WORK_DIRS=("tmp" "logs" "captures")
+
+for dir in "${WORK_DIRS[@]}"; do
+    DIR_PATH="$BASE_DIR/$dir"
+    
+    # Créer le dossier si nécessaire
+    if [ ! -d "$DIR_PATH" ]; then
+        mkdir -p "$DIR_PATH"
+        echo "   ✅ Créé: $dir/"
+    else
+        echo "   ℹ️  Existe déjà: $dir/"
+    fi
+    
+    # Vérifier et corriger le propriétaire si c'est root
+    OWNER=$(stat -c '%U' "$DIR_PATH" 2>/dev/null || echo "$USER")
+    if [ "$OWNER" = "root" ]; then
+        echo "   🔧 Correction propriétaire root → $USER pour $dir/"
+        sudo chown -R "$USER:$USER" "$DIR_PATH"
+    elif [ "$OWNER" != "$USER" ]; then
+        echo "   🔧 Correction propriétaire $OWNER → $USER pour $dir/"
+        sudo chown -R "$USER:$USER" "$DIR_PATH"
+    fi
+    
+    # S'assurer des permissions d'écriture
+    chmod -R 755 "$DIR_PATH" 2>/dev/null || true
+    
+    # Vérifier que l'écriture fonctionne
+    if [ -w "$DIR_PATH" ]; then
+        echo "   ✅ Permissions OK pour $dir/"
+    else
+        echo "   ⚠️  Attention: pas d'accès en écriture à $dir/"
+    fi
+done
+
+echo "   ✅ Dossiers de travail prêts"
 
 # ------------------------------------------------------------
 # 🔟  Informations finales

@@ -1,14 +1,47 @@
 #!/bin/bash
-# ============================================================
-#  main_text_gui.sh
-#  Lance l’interface texte (mode terminal) du solveur Rubik's Cube
-#  Compatible Raspberry Pi OS + environnement rubik-env
-# ============================================================
+# ============================================================================
+#  7_test_solveur_robot.sh
+#  -----------------------
+#  Objectif :
+#     Script de lancement “quick test” pour vérifier l’exécution **interactive**
+#     d’une séquence Singmaster sur le robot, via `test_solveur_robot.py`.
+#     Il s’assure que :
+#       - l’environnement virtuel `rubik-env` est présent,
+#       - le projet est disponible dans le bon dossier,
+#       - le script de test existe,
+#       - le lancement se fait avec le Python du venv (et via sudo -E si nécessaire).
+#
+#  Entrée principale :
+#     - Exécution directe :
+#         ./7_test_solveur_robot.sh
+#         -> Lance : sudo -E ~/rubik-env/bin/python3 test_solveur_robot.py
+#
+#  Paramètres / chemins utilisés :
+#     - VENV_DIR    = "$HOME/rubik-env"
+#     - PROJECT_DIR = "$HOME/rubiks-robot"
+#     - SCRIPT      = "test_solveur_robot.py"
+#     - VENV_PY     = "$VENV_DIR/bin/python3"
+#
+#  Étapes principales :
+#     1) Vérifie que le Python du venv existe et est exécutable.
+#     2) Se place dans le dossier projet (cd).
+#     3) Vérifie la présence du script de test.
+#     4) Lance le test avec `sudo -E` :
+#        - utile si l’exécution nécessite des droits matériels (ex: NeoPixel / /dev/mem).
+#     5) Affiche un message de fin.
+#
+#  Notes :
+#     - Le commentaire “main_text_gui.sh” en en-tête est un héritage de copie :
+#       ce script lance bien `test_solveur_robot.py`.
+#     - Si tu n’as pas besoin de privilèges root pour ce test, tu peux remplacer
+#       `sudo -E` par un appel direct à "$VENV_PY".
+# ============================================================================
+
 
 echo "🚀 Lancement de l’interface texte du solveur Rubik's Cube..."
 
 VENV_DIR="$HOME/rubik-env"
-PROJECT_DIR="$HOME/rubik/pipeline-complet-rubik"
+PROJECT_DIR="$HOME/rubiks-robot"
 SCRIPT="test_solveur_robot.py"
 VENV_PY="$VENV_DIR/bin/python3"
 

@@ -1,44 +1,73 @@
+#!/usr/bin/env python3
 # ============================================================================
 #  robot_servo.py
-#  ----------------
+#  -------------
 #  Objectif :
-#     Gérer l’ensemble des fonctions matérielles du robot Rubik’s Cube :
-#     initialisation pigpio, contrôle des servos, mouvements mécaniques
-#     (rotation du cube, ouverture/fermeture du couvercle, retournement, etc.).
+#     Module **hardware central** du robot Rubik’s Cube (Cubotino-like) :
+#       - initialise la connexion `pigpio` (daemon pigpiod requis),
+#       - pilote 2 servos (plateau bas + couvercle haut),
+#       - expose les primitives mécaniques utilisées par le reste du pipeline :
+#           * ouverture/fermeture/flip du couvercle,
+#           * rotations libres du plateau (spin),
+#           * rotations contraintes (rotate) capot fermé,
+#       - propose des menus/tests pour calibration et validation mécanique.
 #
-#  Fonctions principales :
-#     - move_to(pulsewidth, servo, wait=0.5) :
-#         Commande bas-niveau : envoie une largeur d’impulsion PWM sur un servo.
+#  Matériel / GPIO (pigpio) :
+#     - Servo bas (plateau rotation cube) : B_SERVO_PIN = 24
+#     - Servo haut (couvercle)            : T_SERVO_PIN = 23
+#     - Dépendance : `pigpiod` doit tourner (sinon SystemExit).
 #
-#     - move_slow(from_pw, to_pw, servo, step, delay) :
-#         Mouvement progressif en micropas, évite les à-coups mécaniques.
+#  État global suivi :
+#     - cover_pos : "open" | "close" | "flip"
+#     - cube_pos  : "mid"  | "right" | "left"
+#     - current_pw : dernière PWM envoyée au servo couvercle (pour move_slow)
 #
-#     - flip_open(), flip_close(), flip_up() :
-#         Contrôle du couvercle (servo top) : ouverture, fermeture, retournement.
+#  Entrées principales (API “mouvements”) :
+#     - flip_open()  : ouvre le couvercle (OPEN_PW)
+#     - flip_close() : ferme le couvercle (CLOSE_PW) + micro-release anti-cisaillement
+#     - flip_up()    : séquence flip (aller FLIP_PW, attendre bascule, retour OPEN_PW)
 #
 #     - spin_out(direction, rotate=False) :
-#         Rotation libre du cube vers 'D' (droite) ou 'G' (gauche).
+#         Rotation libre du plateau vers 'D' (droite) ou 'G' (gauche).
+#         Si rotate=True : mode “contraint” (capot fermé) avec overshoot/settle.
 #
 #     - spin_mid(rotate=False) :
-#         Recentrage du cube en position centrale.
+#         Recentrage du plateau ; en mode rotate=True applique une stratégie “loose + trim”
+#         pour revenir proprement au milieu.
 #
 #     - rotate_out(direction) :
-#         Rotation contrainte du cube sous couvercle fermé (mouvement Singmaster).
+#         Rotation contrainte : ferme capot si besoin, spin_out(..., rotate=True),
+#         hold, puis ré-ouvre le capot.
 #
 #     - rotate_mid() :
-#         Recentrage contraint après rotation.
+#         Rotation contrainte de retour au centre (capot fermé), puis ré-ouvre.
 #
+#  Primitives bas niveau :
+#     - move_to(pulsewidth, servo, wait=0.5) :
+#         Envoi PWM direct (µs) + délai ; applique B_OFFSET sur servo bas.
+#     - move_slow(from_pw, to_pw, servo, step=10, delay=0.02) :
+#         Déplacement progressif (micro-pas) pour réduire à-coups.
+#
+#  Paramètres de calibration (à ajuster selon ton cube) :
+#     - Positions PWM : LEFT_PW / MID_PW / RIGHT_PW, OPEN_PW / CLOSE_PW / FLIP_PW
+#     - Trims / stabilité :
+#         RIGHT_TRIM, LEFT_TRIM, MID_TRIM_CONSTRAINED, ROT_OVERSHOOT,
+#         COVER_RELEASE, délais B_WAIT_* / COVER_* / ROTATE_HOLD / SPIN_SETTLE...
+#
+#  Outils / menus de test :
 #     - test_manual_pwm() :
-#         Mode de calibration manuel du servo bas (PWM).
-#
+#         Envoi PWM manuel (M/L/R, +10/-10, valeur directe) pour calibration fine.
+#     - reset_initial(), reset_rotation(), reset_silent(), calibration_plateau() :
+#         Routines de recalage/alignement plateau + réduction vibrations.
+#     - manual_singmaster_loop_cubotino() :
+#         Console interactive : saisie Singmaster → exécution via robot_moves_cubotino.
 #     - hardware_test() :
-#         Menu interactif pour tester couvercle, rotations libres, contraintes, etc.
+#         Menu interactif complet (capot, yaw, resets, tests Singmaster, etc.).
 #
-#  IMPORTANT :
-#     - Ce module centralise toutes les commandes matérielles.
-#     - Toujours garantir un pi.stop() en fin de programme (try/finally ou main).
-#
+#  Exécution directe :
+#     - __main__ : lance hardware_test() puis garantit pi.stop() en finally.
 # ============================================================================
+
 
 import time
 import pigpio  # Assure-toi que pigpiod tourne: sudo systemctl start pigpiod

@@ -1,31 +1,109 @@
-# rubiks_operations.py - Module des opérations Rubik's Cube
+#!/usr/bin/env python3
 # ============================================================================
-# RÉSUMÉ : Module abstrait qui définit toutes les opérations disponibles
-#          pour le système de reconnaissance et résolution du Rubik's Cube.
-#          
-# OBJECTIF : Séparer la logique métier de l'interface utilisateur pour permettre :
-#            - Un mode texte/CLI
-#            - Un GUI personnalisé (Tkinter, PyQt, web, etc.)
-#            - Une API REST
-#            - Des tests unitaires
+#  rubiks_operations.py
+#  --------------------
+#  Objectif :
+#     Fournir une **couche “métier” unifiée** (API) pour piloter toutes les
+#     fonctionnalités du projet Rubik’s Cube, indépendamment de l’interface :
+#       - CLI (texte), GUI (Tkinter/PyQt), API REST, tests unitaires, etc.
+#     Le module encapsule :
+#       - la calibration ROI et couleurs,
+#       - le processing vision -> cubestring (Singmaster/Kociemba),
+#       - la résolution (solveur) + génération d’URL de visualisation,
+#       - le mode robot complet (progress listeners + TFT),
+#       - la capture d’images (simple ou via robot + lock camera multi-face),
+#       - des outils debug et utilitaires (nettoyage tmp, statut, infos système).
 #
-# ARCHITECTURE :
-#   - Toutes les fonctions retournent des dictionnaires standardisés
-#   - Gestion des erreurs avec try/except
-#   - Documentation complète de chaque fonction
-#   - Aucune interaction directe avec l'utilisateur (input/print minimal)
-#   - Paramètres explicites pour tous les modes de fonctionnement
+#  Architecture / conventions :
+#     - Toutes les opérations retournent des dictionnaires standardisés
+#       (OperationResult.to_dict()) :
+#         {success: bool, data: Any|None, error: str|None, message: str|None, metadata: dict|None}
+#     - Séparation stricte logique métier vs UI (pas d’input/print sauf cas tests).
+#     - Enums pour les modes (DebugMode, ProcessingMode).
 #
-# UTILISATION :
-#   from rubiks_operations import RubiksOperations
-#   
-#   ops = RubiksOperations()
-#   result = ops.calibrate_zones()
-#   if result['success']:
-#       print(result['data'])
-#   else:
-#       print(result['error'])
+#  Entrées principales (API) :
+#     - class RubiksOperations(tmp_folder="tmp", config_folder=".")
+#         Gestionnaire central d’opérations ; référence les fichiers :
+#           * rubiks_calibration.json (ROI)
+#           * rubiks_color_calibration.json (couleurs)
+#
+#  Calibration :
+#     - calibrate_zones_interactive()
+#         Lance calibration ROI (calibration_roi.calibration_menu).
+#     - calibrate_colors_interactive()
+#         Lance calibration couleurs (calibration_colors.calibrate_colors_interactive).
+#     - get_calibration_status()
+#         Retourne l’état ROI + couleurs + metadata (stats via calibration_rubiks.get_calibration_stats).
+#     - load_roi_calibration() / load_color_calibration()
+#         Charge les JSON de calibration et les retourne dans data.
+#
+#  Processing / production :
+#     - process_rubiks_cube(debug="text")
+#         Vision + encodage :
+#           * vérifie ROI + couleurs,
+#           * appelle processing_rubiks.production_mode(...),
+#           * retourne singmaster + faces (si fourni).
+#     - process_api_mode(debug="text")
+#         Variante “sans UI” : processing_rubiks.process_rubiks_to_singmaster(...)
+#     - quick_pipeline_test(mode="robot_raw", debug="text")
+#         Lance processing_rubiks.quick_pipeline_test_corrected(...)
+#
+#  Debug :
+#     - debug_single_face(face)
+#         Diagnostic détaillé d’une face (process_images_cube.test_single_face_debug).
+#     - debug_color_mapping()
+#         Diagnostic mapping couleurs (processing_rubiks.debug_color_mapping).
+#     - debug_vision_and_rotations()
+#         Debug complet vision + rotations (processing_rubiks.full_debug_pipeline).
+#
+#  Solveur :
+#     - solve_cube(cubestring)
+#         Résout une chaîne 54 caractères via solver_wrapper.solve_cube.
+#     - solve_and_get_url(cubestring, method="kociemba", site="alg")
+#         Résout + génère une URL via url_convertor.convert_to_url.
+#
+#  Mode robot (pipeline complet + progress + TFT) :
+#     - run_robot_mode(do_solve=True, do_execute=False, debug="text")
+#         Orchestration :
+#           * RobotCubeSolver.run(...)
+#           * listeners : console_clean_listener + jsonl_file_listener + TFT listener
+#           * retourne cubestring, solution, chemin log JSONL, flags solved/executed.
+#
+#  Capture d’images :
+#     - capture_images(rotation=0, folder="captures")
+#         Capture interactive via CameraInterface2.capture_loop.
+#     - capture_single_image(rotation=0, folder="captures")
+#         Capture unique (fonction capture_image) + retourne le chemin.
+#     - capture_images_robot(rotation=0, folder="", debug="text")
+#         Capture “robot” :
+#           * reset_initial + lock_for_scan_multiface (avec flips)
+#           * capture_all_faces via RobotCubeSolver
+#           * gestion LEDs + close caméra (cleanup best-effort).
+#
+#  Calibration des blancs (AWB) :
+#     - calibrate_blancs()
+#         Lance CameraInterface2.awb_menu(...) (workflow “feuille blanche”).
+#
+#  Tests GPIO / matériel :
+#     - test_anneau_lumineux()
+#         Lance anneau_lumineux.main() (auto relance sudo si nécessaire).
+#     - test_tft(duration) / test_tft_text(message, duration=5)
+#         Tests écran TFT (via ecran.tft.*).
+#     - test_moteur() / test_mouvements_robot()
+#         Tests servos (robot_servo.hardware_test / manual_singmaster_loop_cubotino).
+#
+#  Utilitaires :
+#     - cleanup_tmp_files(confirm=True) / confirm_cleanup()
+#         Nettoyage dossier tmp en conservant {F,R,B,L,U,D}.jpg.
+#     - get_available_faces()
+#         Liste faces présentes / manquantes dans tmp.
+#     - get_system_info()
+#         Résume chemins + présence calibrations + nombre de fichiers tmp.
+#
+#  Exécution directe (__main__) :
+#     - Démonstrations : statut calibration, processing, solve+url, infos système.
 # ============================================================================
+
 
 import os
 import glob
@@ -596,20 +674,21 @@ class RubiksOperations:
             # ✅ IMPORTANT : remettre le robot dans une pose connue AVANT le lock
             reset_initial()
 
-            # ✅ Pré-lock multiface : 4 flips -> retour état initial (comme tu dis)
-            camera.lock_for_scan_multiface(
-                flip_cb=flip_cb,
-                n_samples=4,
-                aggregate="median",     # robuste (je recommande)
-                warmup_s=0.8,
-                settle_after_flip_s=0.25,
-                per_pose_timeout_s=1.2,
-                stability_pts=6,
-                tol=0.05,
-                min_exp=8000,
-                max_gain=8.0,
-                debug=True
-            )
+            # ✅ Pré-lock multiface : 4 flips -> retour état initial
+            #camera.lock_for_scan_multiface(
+            #    flip_cb=flip_cb,
+            #    n_samples=4,
+            #    aggregate="median",     
+            #    warmup_s=0.8,
+            #    settle_after_flip_s=0.25,
+            #    per_pose_timeout_s=1.2,
+            #    stability_pts=6,
+            #    tol=0.05,
+            #    min_exp=8000,
+            #    max_gain=8.0,
+            #    debug=True
+            #)
+            camera.lock_for_scan_multiface_cfg(flip_cb=flip_cb,debug=True)
 
             solver.capture_all_faces()  # -> doit écrire U.jpg, R.jpg, F.jpg... dans out_dir
             

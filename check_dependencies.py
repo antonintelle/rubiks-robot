@@ -1,8 +1,58 @@
 #!/usr/bin/env python3
-# =====================================================================
-# check_dependencies.py
-# Script de vérification des dépendances avant lancement du GUI robot
-# =====================================================================
+# ============================================================================
+#  check_dependencies.py
+#  ---------------------
+#  Objectif :
+#     Script de **pré-vérification** avant lancement de l’interface GUI du robot
+#     (Tkinter). Il contrôle :
+#       - la présence des modules Python requis (et optionnels),
+#       - la présence des fichiers clés du projet,
+#       - le bon fonctionnement de Tkinter,
+#       - l’existence des dossiers attendus,
+#       - la présence (optionnelle) des fichiers de calibration.
+#
+#  Entrée principale :
+#     - Exécution directe (__main__) :
+#         python3 check_dependencies.py
+#         -> Affiche un rapport en console + code de sortie :
+#              0 : tout OK
+#              1 : dépendances manquantes (bloquantes)
+#
+#  Étapes principales (main) :
+#     1) Modules Python essentiels (bloquants si absents) :
+#        - numpy, matplotlib, cv2 (OpenCV), PIL, kociemba, colorama, tkinter
+#
+#     2) Modules optionnels (non bloquants) :
+#        - picamera2, pytest, RubikTwoPhase, ultralytics (YOLO)
+#
+#     3) Fichiers projet attendus (bloquants si manquants) :
+#        - robot_moves_cubotino.py, Cubotino_T_moves.py, robot_solver.py,
+#          calibration_rubiks.py, process_images_cube.py, processing_rubiks.py,
+#          solver_wrapper.py, calibration_roi.py
+#
+#     4) Test Tkinter :
+#        - Crée une fenêtre Tk, withdraw(), destroy() pour valider l’environnement GUI.
+#
+#     5) Dossiers nécessaires :
+#        - tmp, logs (avertissement si absents, création possible par ailleurs)
+#
+#     6) Fichiers de calibration (optionnels) :
+#        - rubiks_calibration.json (ROI), rubiks_color_calibration.json (couleurs)
+#
+#  Fonctions utilitaires :
+#     - check_module(name, import_name=None, optional=False)
+#         Vérifie import, affiche un statut coloré (✅/⚠️/❌) et retourne True/False.
+#
+#     - check_file_exists(filepath, description)
+#         Vérifie existence d’un fichier et affiche OK/KO.
+#
+#  Sorties / UX :
+#     - Affichage console structuré par sections avec codes couleurs ANSI.
+#     - En cas d’échec : propose des commandes d’installation (script + apt + pip).
+#     - En cas de succès : indique la commande pour lancer le GUI :
+#         python3 tkinter_gui_robot.py
+# ============================================================================
+
 
 import sys
 import subprocess
@@ -73,7 +123,6 @@ def main():
         ("OpenCV", "cv2"),
         ("Pillow (PIL)", "PIL"),
         ("Kociemba", "kociemba"),
-        ("Ultralytics (YOLO)", "ultralytics"),
         ("Colorama", "colorama"),
         ("Tkinter", "tkinter"),
     ]
@@ -91,6 +140,7 @@ def main():
         ("Picamera2", "picamera2"),
         ("Pytest", "pytest"),
         ("RubikTwoPhase", "RubikTwoPhase"),
+        ("Ultralytics (YOLO)", "ultralytics"),
     ]
     
     for name, import_name in optional_modules:
@@ -102,9 +152,9 @@ def main():
     print("\n📁 Fichiers du projet:")
     
     project_files = [
-        ("robot_moves.py", "Module des mouvements robot"),
+        ("robot_moves_cubotino.py", "Module des mouvements robot"),
+        ("Cubotino_T_moves.py", "Module des mouvements robot"),
         ("robot_solver.py", "Module solveur robot"),
-        ("tkinter_gui_robot.py", "Interface graphique robot"),
         ("calibration_rubiks.py", "Module de calibration"),
         ("process_images_cube.py", "Module de traitement d'images"),
         ("processing_rubiks.py", "Module de processing"),

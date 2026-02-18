@@ -1,21 +1,58 @@
-
+#!/usr/bin/env python3
 # ============================================================================
 #  calibration_rubiks.py
 #  ---------------------
 #  Objectif :
-#     Fichier **pont enrichi** pour la calibration du projet Rubik’s Cube.
-#     - Interface unifiée pour la calibration ROI et Couleurs
-#     - Fournit des statistiques et un affichage complet de la calibration actuelle
-#     - Corrige la clé 'faces_count' (anciennement 'faces count')
+#     Fournir un **point d’entrée unifié** (“fichier pont”) pour la calibration
+#     du projet Rubik’s Cube :
+#       - Calibration ROI (zones des faces dans les images)
+#       - Calibration Couleurs (références RGB/HSV + tolérances)
+#     Le module ajoute :
+#       - un **menu global** simple (console),
+#       - un **résumé/statistiques** sur l’état des calibrations,
+#       - un **affichage complet** des JSON actuels,
+#       - une correction de compatibilité : clé "faces_count" (au lieu de "faces count").
 #
-#  Fonctions principales :
-#     - get_calibration_stats()     → résumé des calibrations
-#     - calibration_mode()          → menu interactif global
+#  Entrées principales :
+#     - calibration_mode()
+#         Menu console global pour :
+#           1) lancer la calibration ROI,
+#           2) lancer la calibration Couleurs,
+#           3) afficher statistiques,
+#           4) afficher contenu complet des calibrations (dump JSON),
+#           5) quitter.
 #
-#  Sous-modules utilisés :
-#     * calibration_roi.py      → calibration ROI (zones des faces)
-#     * calibration_colors.py   → calibration des couleurs
+#     - get_calibration_stats() -> dict | None
+#         Retourne un résumé “prêt à afficher” :
+#           * ROI : faces présentes, manquantes, faces_count, taille moyenne (px)
+#           * Couleurs : nombre d’étiquettes calibrées et leurs noms
+#         Retourne None si aucune calibration n’existe.
+#
+#  Fonctions utilitaires :
+#     - show_full_calibration()
+#         Affiche le contenu brut des fichiers :
+#           * rubiks_calibration.json
+#           * rubiks_color_calibration.json
+#
+#  Dépendances / modules utilisés :
+#     - calibration_roi.py :
+#         * load_calibration()
+#         * calibration_menu()  (menu interactif ROI)
+#     - calibration_colors.py :
+#         * load_color_calibration()
+#         * calibrate_colors_interactive()
+#
+#  Fichiers de calibration manipulés :
+#     - rubiks_calibration.json        (ROI : bbox ou quad pour F,R,B,L,U,D)
+#     - rubiks_color_calibration.json  (couleurs : références + tolérances)
+#
+#  Notes :
+#     - Ce module expose volontairement une API “agrégée” via __all__ afin de
+#       simplifier les imports côté pipeline.
+#     - Les stats ROI acceptent bbox (x1,y1,x2,y2) ou quad (TL,TR,BR,BL) et calculent
+#       une taille moyenne via distances euclidiennes.
 # ============================================================================
+
 
 from __future__ import annotations
 from typing import Dict, Any, Optional

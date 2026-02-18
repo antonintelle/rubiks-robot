@@ -1,41 +1,90 @@
-# process_images_cube.py - Version améliorée
-# RESUME : Prcoessus de reconnsainces des images et encode du cube dans un format FacesDict
-# FacesDict permet d'encoder le cube en colueurs (c'est un tableau 3x3 dans ce cas)
-# Le point d'entrée principal est detect_colors_for_faces qui est la fonction 
-# detect_colors_for_faces
-#
+#!/usr/bin/env python3
 # ============================================================================
 #  process_images_cube.py
 #  ----------------------
 #  Objectif :
-#     Pipeline de reconnaissance visuelle d’un Rubik’s Cube à partir d’images.
-#     Le code détecte les faces, extrait les 9 cases (3x3), identifie les couleurs,
-#     et encode le résultat sous forme de dictionnaire FacesDict.
+#     Pipeline de **reconnaissance visuelle** d’un Rubik’s Cube à partir d’images
+#     (faces photographiées). Le module :
+#       - extrait la face du cube (via ROI calibrée ou détection auto),
+#       - redresse/normalise la face en 300×300,
+#       - découpe la face en 9 cellules (3×3),
+#       - analyse les couleurs (mode “simple” robuste aux reflets),
+#       - retourne un dictionnaire `FacesDict` (Face -> FaceResult).
 #
-#  Entrée principale :
-#     - detect_colors_for_faces(image_folder, roi_data, color_calibration=None, debug="text")
-#       -> Retourne un FacesDict avec les 6 faces reconnues.
+#  Entrées principales :
+#     - detect_colors_for_faces(image_folder, roi_data, color_calibration=None,
+#                               debug="text", strict=False) -> FacesDict
+#         Point d’entrée principal “production” :
+#           * parcourt l’ordre canonique ["F","R","B","L","U","D"]
+#           * charge chaque image <folder>/<FACE>.jpg
+#           * extrait `warped` + `cells` via process_face_with_roi(...)
+#           * classe les 9 couleurs via analyze_colors_simple(...)
+#           * normalise les labels via _norm(...)
+#           * en mode strict : lève si fichier/ROI/extraction/couleurs incomplètes.
 #
-#  Étapes principales du pipeline :
-#     1) Prétraitement image :
-#        - prepare_image : conversion N&B, flou, CLAHE
-#        - detect_edges : contours Canny + masque
-#     2) Détection cube :
-#        - detect_lines / classify_lines / select_main_lines : détection des lignes
-#        - detect_cube_boundary / detect_cube_simple : alternatives par contour
-#        - build_quad / validate_quad / warp_face : construction & normalisation d’un carré
-#     3) Extraction grille :
-#        - extract_grid : découpe en 9 cellules (3x3)
+#     - detect_colors_for_faces_legacy(...)
+#         Variante historique (asserts) conservée pour comparaison / debug.
+#
+#  Extraction d’une face (ROI calibrée) :
+#     - process_face_with_roi(image_path, roi_coords, face_name,
+#                             show=False, save_intermediates=True) -> (warped, cells)
+#         Gère 2 formats de ROI :
+#           * bbox : (x1,y1,x2,y2) -> crop + resize 300×300
+#           * quad : 4 points TL,TR,BR,BL -> perspective warp (warp_face)
+#         Option debug : sauvegarde intermédiaires dans tmp/ :
+#           {FACE}_1_original_with_roi.jpg / _2_roi_extracted.jpg / _3_warped_300x300.jpg / _4_grid_3x3.jpg
+#
+#  Pipeline “détection auto” (optionnel / debug) :
+#     - process_one_face(image, ...) -> dict
+#         Prétraitement + edges + Hough lines -> sélection lignes -> quad -> warp -> grid.
+#     - process_one_face_debug(image, ...) -> dict
+#         Variante très verbosée : tente d’abord contours (detect_cube_boundary / simple),
+#         puis fallback lignes si besoin, avec visualisations Matplotlib.
+#
+#  Étapes principales / fonctions clés :
+#     1) Prétraitement :
+#        - prepare_image(...) : grayscale + blur (optionnel) + CLAHE
+#        - create_cube_mask(...) : masque centré pour limiter la détection
+#        - detect_edges(...) : Canny + application du masque
+#
+#     2) Détection géométrie (lignes / contours) :
+#        - detect_lines(...) : HoughLinesP adaptatif (selon densité d’edges)
+#        - classify_lines(...) : séparation horizontales / verticales (tolérance angle)
+#        - filter_and_group_lines(...) : regroupe lignes proches, garde les plus longues
+#        - select_main_lines(...) : déduit 4 bords externes (stratégie “lignes internes 3×3”)
+#        - line_intersection(...) : intersection stable de 2 droites
+#        - build_quad(...) : intersections -> quadrilatère -> validate_quad(...)
+#        - detect_cube_boundary(...) / detect_cube_simple(...) : alternatives par contour
+#        - order_quad_points(...) : remet les points en ordre TL,TR,BR,BL
+#        - validate_quad(...) : vérifie points dans l’image + ratio carré + tailles min/max
+#
+#     3) Normalisation + découpe grille :
+#        - warp_face(image, quad, size=300) : perspective transform vers 300×300
+#        - extract_grid(warped, save_prefix=None) : découpe en 9 cellules + debug overlays
+#
 #     4) Analyse des couleurs :
-#        - analyze_colors / analyze_colors_with_calibration : classification par défaut ou calibrée
-#        - visualize_color_grid : affichage et sauvegarde de la grille colorée
+#        - analyze_colors_simple(cells, debug=...) (depuis calibration_colors)
+#        - _norm(label) : normalisation des labels vers {red, orange, yellow, green, blue, white}
 #
-#  Fonctions de support :
-#     - process_one_face / process_one_face_debug : pipeline complet pour une face
-#     - process_face_with_roi : traitement direct d’une ROI calibrée
-#     - f : traitement batch d’une liste d’images avec stats
+#  Visualisation / debug couleurs :
+#     - visualize_color_grid(colors, face_name, save_to_tmp=True)
+#         Génère une grille 3×3 “couleurs Rubik’s” (image) + légende + sauvegarde tmp/.
+#     - test_single_face_debug(face_name, roi_coords, color_calibration=None)
+#         Test complet d’une seule face : extraction ROI + classification + grille colorée
+#         + logs RGB/HSV/Lab par cellule (diagnostic yellow/orange/reflets).
 #
+#  Batch / utilitaires :
+#     - f(files, ...) : traite une liste d’images et affiche des stats de réussite.
 #
+#  Dépendances / intégration :
+#     - OpenCV (cv2), NumPy, Matplotlib
+#     - calibration_rubiks.load_calibration (ROI)
+#     - calibration_colors.analyze_colors_simple + sampling/debug HSV/Lab
+#     - types_shared : FaceResult, FacesDict
+#
+#  Conventions fichiers :
+#     - Images attendues : <image_folder>/{F,R,B,L,U,D}.jpg
+#     - Dossier debug : tmp/ (intermédiaires + cellules + grilles colorées)
 # ============================================================================
 
 import cv2

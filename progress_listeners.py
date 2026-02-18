@@ -1,4 +1,56 @@
-# progress_listeners.py
+#!/usr/bin/env python3
+# ============================================================================
+#  progress_listeners.py
+#  ---------------------
+#  Objectif :
+#     Fournir des **listeners** (consommateurs d’événements) pour exploiter les
+#     messages de progression émis par `progress.emit(...)` :
+#       - affichage console “propre” (seulement les étapes majeures),
+#       - journalisation persistante au format JSONL (un fichier par run),
+#       - agrégation de plusieurs listeners avec tolérance aux erreurs.
+#
+#  Types / conventions :
+#     - Listener = Callable[[str, Dict[str, Any]], None]
+#       Chaque listener reçoit :
+#         * event : str  (nom de l’événement)
+#         * data  : dict (payload enrichi : ts, pct, msg, etc.)
+#
+#  Entrées principales (API) :
+#     - console_clean_listener(event, data)
+#         Affiche uniquement un sous-ensemble d’événements “majeurs” (set `major`) :
+#           * pipeline : start/done
+#           * capture  : lock + capture faces + completed/failed
+#           * detection/conversion/solve/execute : started/completed/failed
+#           * already_solved / error
+#         Format : "[ xx.x%] <event> <msg>"
+#
+#     - jsonl_file_listener(folder="tmp", prefix="debug_progress", timestamp=None) -> Listener
+#         Crée un listener qui écrit chaque événement en JSONL :
+#           * crée le dossier si nécessaire,
+#           * nomme le fichier : {prefix}_{YYYYMMDD_HHMMSS}.jsonl (sauf timestamp fourni),
+#           * écrit chaque payload (data) en une ligne JSON (UTF-8, ensure_ascii=False),
+#           * flush à chaque écriture (utile en live/debug).
+#         Bonus : expose le chemin via attribut _listener.path.
+#
+#     - multi_listener(*listeners) -> Listener
+#         Combine plusieurs listeners en un seul :
+#           * appelle chacun dans l’ordre,
+#           * encapsule chaque appel dans try/except pour éviter qu’un listener
+#             défaillant casse tout le pipeline.
+#
+#  Dépendances :
+#     - typing (types)
+#     - json, os (écriture fichier + mkdir)
+#     - datetime (timestamp des fichiers)
+#
+#  Notes :
+#     - jsonl_file_listener ouvre le fichier en mode "w" : un nouveau fichier est
+#       créé à chaque exécution (pas d’append).
+#     - console_clean_listener est volontairement minimal : adapte la liste `major`
+#       selon les événements que tu veux voir.
+# ============================================================================
+
+
 from typing import Dict, Any, Callable, Optional
 import json
 import os

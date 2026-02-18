@@ -14,9 +14,6 @@ Pillow>=10.0.0
 kociemba>=1.2.0
 RubikTwoPhase>=1.0.0
 
-# === Détection automatique (YOLOv8) ===
-ultralytics>=8.0.0
-
 # === Caméra moderne (libcamera / Picamera2) ===
 # installé via apt, NE PAS pip install
 # -> sudo apt install python3-picamera2

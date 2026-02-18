@@ -1,3 +1,52 @@
+#!/usr/bin/env python3
+# ============================================================================
+#  url_convertor.py
+#  ---------------
+#  Objectif :
+#     Convertir une **solution de Rubik’s Cube** (suite de mouvements) en liens
+#     URL vers des visualiseurs / simulateurs en ligne, avec nettoyage et
+#     normalisation selon le solveur utilisé.
+#
+#  Entrées principales (API) :
+#     - convert_to_url(solution: str, method: str = "kociemba",
+#                      site: str = "alg", cubestring: str | None = None) -> str
+#         Génère une URL pour :
+#           * alg.cubing.net  (site="alg")
+#           * Twizzle editor  (site="twizzle")  + option setup-alg=cubestring
+#           * VisualCube PNG  (site="visualcube") nécessite cubestring
+#
+#  Nettoyage / normalisation :
+#     - clean_solution(solution: str, method: str) -> str
+#         Filtre les mouvements valides selon le format :
+#           * method="k2"       : garde uniquement [URFDLB][123] (ex: U1 U2 U3)
+#           * method="kociemba" : garde uniquement [URFDLB](2|'|)? (ex: U U2 U')
+#         -> Supprime tout token non reconnu.
+#
+#     - convert_twophase_to_singmaster(solution: str) -> str
+#         Convertit le format RubikTwoPhase (U1/U2/U3) vers Singmaster standard :
+#           1 -> ""
+#           2 -> "2"
+#           3 -> "'"
+#
+#  Génération d’URL (détails) :
+#     - alg :
+#         encode l’alg via urllib.parse.quote et renvoie une URL de type "alg".
+#     - twizzle :
+#         encode l’alg ; si cubestring est fourni, ajoute setup-alg=<cubestring>.
+#     - visualcube :
+#         encode cubestring et renvoie une URL d’image PNG (fmt=png, size=400).
+#         -> Lève ValueError si cubestring absent.
+#
+#  Dépendances :
+#     - urllib.parse : URL encoding
+#     - re : validation des tokens de mouvements
+#
+#  Notes :
+#     - convert_to_url() imprime actuellement (print) la solution nettoyée et
+#       la version convertie : utile en debug, mais à enlever si tu veux un module
+#       “silencieux” en production.
+# ============================================================================
+
 import urllib.parse
 import re
 

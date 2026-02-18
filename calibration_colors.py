@@ -1,20 +1,91 @@
+#!/usr/bin/env python3
 # ============================================================================
 #  calibration_colors.py
 #  ---------------------
 #  Objectif :
-#     Regrouper TOUT ce qui concerne la **calibration et classification des couleurs**.
+#     Centraliser toute la logique de **mesure**, **calibration**, et
+#     **classification** des couleurs des stickers du Rubik’s Cube.
+#     Le fichier fournit :
+#       - des méthodes robustes d’échantillonnage couleur (anti-reflets),
+#       - une calibration utilisateur sauvegardée en JSON,
+#       - plusieurs classificateurs (calibré / “cubotino-like” simple),
+#       - des heuristiques de stabilisation (yellow/orange, reflets, centre).
 #
-#  Fonctions principales :
-#     - load_color_calibration(filename='rubiks_color_calibration.json')
-#     - save_color_calibration(color_calibration, filename='rubiks_color_calibration.json')
-#     - analyze_colors(cells) / analyze_colors_with_calibration(cells, calib)
-#     - calibrate_colors_interactive()  ← utilise la ROI existante + clic utilisateur
-#     - FaceSelector / display_and_select_cell : interface de sélection
+#  Entrées principales :
+#     - calibrate_colors_interactive(default_tolerance=None)
+#         Calibration guidée par clic (Matplotlib) sur des images tmp/{F,R,B,L,U,D}.jpg,
+#         en s’appuyant sur la calibration ROI (calibration_roi.load_calibration).
+#         Sauvegarde rubiks_color_calibration.json via save_color_calibration().
 #
-#  Remarques :
-#     - Pour éviter les imports circulaires, on importe localement
-#       process_face_with_roi (depuis process_images_cube) au moment d'usage.
+#     - load_color_calibration(path="rubiks_color_calibration.json")
+#     - save_color_calibration(color_calibration, filename="rubiks_color_calibration.json")
+#         I/O JSON de la calibration : dict {color: (r,g,b,tol)} + metadata.
+#
+#     - analyze_colors_with_calibration(cells, color_calibration, margin=0.25, debug=False)
+#         Analyse d’une face (liste de cellules) à partir d’une calibration fournie.
+#
+#     - analyze_colors(cells)
+#         Wrapper qui charge automatiquement la calibration JSON, puis appelle
+#         analyze_colors_with_calibration(...).
+#
+#     - analyze_colors_simple(cells, margin=0.25, debug=False)
+#         Variante “Cubotino-like” (HSV + correctifs Lab) plus robuste aux reflets,
+#         avec détection de faces à risque et heuristiques anti-confusions.
+#
+#  Mesure couleur (sampling) :
+#     - sample_rgb_from_cell_bgr(cell_bgr, margin=0.25)
+#         Mesure robuste sur une ROI cellule (OpenCV BGR) :
+#           * coupe une marge interne (anti-bords/joints),
+#           * blur léger,
+#           * rejet des pixels specular via HSV (V haut + S bas),
+#           * médiane sur pixels restants (robuste).
+#     - sample_rgb_from_cell_bgr_legacy(...) : ancienne version sans rejet specular.
+#
+#  Classification (modes) :
+#     1) Mode calibré :
+#        - classify_with_calibration(r,g,b, color_calibration, debug_hsv=False)
+#          * shortlist par tolérance RGB
+#          * fallback “plus proche RGB”
+#          * arbitrages HSV pour couples ambigus (yellow/orange, red/orange)
+#        - classify_color_default(r,g,b) : fallback HSV simple (non calibré).
+#
+#     2) Mode simple “cubotino-like” :
+#        - classify_color_cubotino_like(cell_bgr, ..., shiny=False, yo_centers=None)
+#          * décisions via HSV + règles spécifiques
+#          * décision Yellow/Orange renforcée via Lab (centres YO calculés depuis calib)
+#        - detect_risky_face(...) / detect_shiny_face(...) : déclenchement mode “shiny”
+#          si conditions de reflets + bandes de teinte à risque.
+#
+#  Heuristiques / correctifs :
+#     - _decide_yellow_orange_lab(...) + cache YO (_get_yo_lab_centers_cached)
+#         Décision YO en espace Lab (a,b) à partir des centres calibrés.
+#     - fix_center_by_majority(colors)
+#         Corrige le centre si "unknown" en forçant la couleur majoritaire des 8 autres.
+#     - _is_fake_red_that_should_be_orange(cell_bgr)
+#         Détecte un “faux rouge” dû à un effondrement orange (wrap hue) et corrige.
+#     - Score reflets : _specular_score_cell(...) + détection face brillante.
+#
+#  UI calibration (clic) :
+#     - FaceSelector : affiche les 6 faces et permet de cliquer une cellule
+#       Support ROI au format :
+#         * bbox (x1,y1,x2,y2) (legacy)
+#         * quad (4 points) avec projection perspective (cv2.getPerspectiveTransform)
+#     - display_and_select_cell(roi_data, color_name)
+#
+#  Dépendances / intégration pipeline :
+#     - Utilise OpenCV (cv2) / NumPy.
+#     - Évite les imports circulaires via imports tardifs :
+#         * process_images_cube.process_face_with_roi (extraction cellules depuis ROI)
+#         * calibration_roi.load_calibration (chargement ROI)
+#     - Fichiers attendus :
+#         * tmp/{F,R,B,L,U,D}.jpg : images des faces pour la calibration interactive
+#         * rubiks_color_calibration.json : calibration persistante
+#
+#  Exécution directe :
+#     - __main__ : lance calibrate_colors_interactive()
+#       Option CLI : --tolerance <float> pour forcer la tolérance sur toutes les couleurs.
 # ============================================================================
+
 
 from __future__ import annotations
 import os, json

@@ -1,14 +1,41 @@
 #!/bin/bash
-# ============================================================
-#  main_text_gui.sh
-#  Lance l’interface texte (mode terminal) du solveur Rubik's Cube
-#  Compatible Raspberry Pi OS + environnement rubik-env
-# ============================================================
+# ============================================================================
+#  main_text_gui.sh  (alias: 1_text_gui.sh)
+#  ---------------------------------------
+#  Objectif :
+#     Script de lancement de l’interface **texte** du projet Rubik’s Cube
+#     en s’assurant que :
+#       - le projet est bien présent dans le bon dossier,
+#       - l’environnement virtuel `rubik-env` est disponible,
+#       - le lancement se fait avec le Python du venv,
+#       - l’exécution est faite via `sudo -E` (nécessaire pour NeoPixel / /dev/mem).
+#
+#  Entrée principale :
+#     - Exécution directe :
+#         ./main_text_gui.sh
+#         -> Lance : sudo -E ~/rubik-env/bin/python3 text_gui.py
+#
+#  Paramètres / chemins utilisés :
+#     - VENV_DIR    = "$HOME/rubik-env"
+#     - PROJECT_DIR = "$HOME/rubiks-robot"
+#     - SCRIPT      = "text_gui.py"
+#     - VENV_PY     = "$VENV_DIR/bin/python3"
+#
+#  Sécurité / vérifications :
+#     1) Vérifie que $VENV_PY existe et est exécutable, sinon exit 1.
+#     2) Vérifie que $PROJECT_DIR existe (cd), sinon exit 1.
+#     3) Vérifie que text_gui.py est présent dans le dossier projet, sinon exit 1.
+#
+#  Notes :
+#     - `sudo -E` conserve l’environnement (utile si variables/venv nécessaires).
+#     - Si tu n’utilises pas de NeoPixel, tu peux retirer sudo et lancer directement
+#       "$VENV_PY" "$SCRIPT".
+# ============================================================================
 
 echo "🚀 Lancement de l’interface texte du solveur Rubik's Cube..."
 
 VENV_DIR="$HOME/rubik-env"
-PROJECT_DIR="$HOME/rubik/pipeline-complet-rubik"
+PROJECT_DIR="$HOME/rubiks-robot"
 SCRIPT="text_gui.py"
 VENV_PY="$VENV_DIR/bin/python3"
 

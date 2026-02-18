@@ -1,4 +1,58 @@
-# tft_listener.py
+#!/usr/bin/env python3
+# ============================================================================
+#  tft_listener.py
+#  ---------------
+#  Objectif :
+#     Convertir les événements de progression du pipeline (progress.emit / listeners)
+#     en un affichage “écran TFT” simple (2 lignes + barre), via un driver TFT
+#     compatible (ex: ConsoleTFTFile de tft_driver.py).
+#
+#  Principe :
+#     - Filtre uniquement les événements “majeurs” (MAJOR_EVENTS) afin de ne pas
+#       saturer l’affichage.
+#     - Limite le taux de rafraîchissement (min_refresh_s) pour éviter le flicker.
+#     - Formate des messages courts (max_line_len) adaptés à un petit écran.
+#     - Déduplique les rendus : ne redessine pas si (event, pct, msg) n’a pas changé.
+#
+#  Entrée principale (factory) :
+#     - make_tft_listener(tft, min_refresh_s=0.10, max_line_len=20) -> listener
+#         Retourne une fonction listener(event: str, data: dict) qui :
+#           * ignore les events non majeurs,
+#           * affiche :
+#               - ligne 1 : "<pct> <step>"
+#               - ligne 2 : message court contextuel
+#               - barre   : progression (si pct numérique)
+#           * gère les erreurs silencieusement (try/except autour du driver TFT).
+#
+#  Événements supportés :
+#     - Pipeline : pipeline_started / pipeline_done
+#     - Capture  : capture_started, camera_lock_started/done, capture_face,
+#                 capture_completed, capture_failed
+#     - Calibration : calibration_started/completed/failed/skipped
+#     - Detection : detection_started, detect_face, detection_completed/failed
+#     - Conversion : conversion_started/completed/failed
+#     - Solve : solving_started/completed/failed, already_solved
+#     - Execute : execute_move, execution_finished/stopped/failed
+#     - Generic : error
+#
+#  Formats d’affichage (exemples) :
+#     - CAP U capturing 1/6
+#     - DET F ... 2/6
+#     - Conv OK: UFRDLB…   (aperçu cube_string)
+#     - EXE 12/42 R2 executing
+#     - SOL 23: R U R' ...
+#     - ...FAILED: <msg | err>
+#
+#  Fonctions internes :
+#     - _short(s)     : tronque/pad à max_line_len, remplace "→" par ">"
+#     - _fmt_pct(pct) : " 42%" si pct ∈ [0..1], sinon " --%"
+#     - _err_hint(data) : assemble msg + err court (troncature à 40 chars)
+#
+#  Notes :
+#     - FINAL_EVENTS ne subit pas la limitation min_refresh_s (on force l’update).
+#     - Le listener ne lève jamais : en cas d’erreur driver TFT, il ignore.
+# ============================================================================
+
 from __future__ import annotations
 from typing import Dict, Any
 import time

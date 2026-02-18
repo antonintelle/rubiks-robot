@@ -1,37 +1,77 @@
-
+#!/usr/bin/env python3
 # ============================================================================
 #  calibration_roi.py
 #  ------------------
 #  Objectif :
-#     Gérer la calibration des ROI (zones d'intérêt) sur les 6 faces du cube.
-#     Ce module permet :
-#        - de charger / sauvegarder les coordonnées de ROI
-#        - de valider leur format
-#        - d'effectuer une calibration interactive OpenCV (clic souris)
+#     Gérer la **calibration des ROI** (Regions Of Interest) correspondant aux 6 faces
+#     du cube sur les images de capture. Ce module permet :
+#       - de **charger / sauvegarder** une calibration persistante (JSON),
+#       - de **valider** le format des ROI (robustesse),
+#       - de **calibrer manuellement** via OpenCV (clic souris),
+#       - de **calibrer automatiquement** via YOLO (détection bbox) si disponible.
 #
-#  Fonctionnalités :
-#     - validate_roi_dict(roi_data)
-#     - load_calibration(filename='rubiks_calibration.json')
-#     - save_calibration(roi_data, filename='rubiks_calibration.json')
-#     - calibrate_roi_interactive(single_face_only=True)
-#     - calibrate_single_face(image_path, face_name)
-#     - calibrate_roi_yolo(model_path="in/best.pt", images_dir="tmp")
+#  Formats ROI supportés :
+#     - ROIBox : (x1, y1, x2, y2)  (rectangle axis-aligned)
+#     - ROIQuad: ((xTL,yTL),(xTR,yTR),(xBR,yBR),(xBL,yBL))  (4 coins)
+#     - CANON_FACES = ["U","D","L","R","F","B"]
 #
-#  Utilisation :
-#     from calibration_roi import calibrate_roi_interactive
-#     calibrate_roi_interactive()  # même ROI pour les 6 faces (par défaut)
+#  Entrées principales :
+#     - load_calibration(filename="rubiks_calibration.json") -> Dict[face, ROI] | None
+#         Charge et normalise les ROI depuis un JSON, puis valide le contenu.
 #
-#     ou :
-#     calibrate_roi_interactive(single_face_only=False)  # ROI différente par face
+#     - save_calibration(roi_data, filename="rubiks_calibration.json") -> bool
+#         Sauvegarde robuste (écriture .tmp puis os.replace) après validation.
 #
-#  Auteur : refactor ChatGPT (style d'origine préservé)
-#  Date   : 2025-10-09
+#     - calibrate_roi_interactive(single_face_only=True, mode="bbox"|"quad") -> Dict[face, ROI]
+#         Calibration manuelle à partir des images tmp/{U,D,L,R,F,B}.jpg :
+#           * si single_face_only=True : une seule ROI copiée sur les 6 faces
+#           * sinon : ROI spécifique par face
+#         Utilise calibrate_single_face() + callback souris OpenCV.
+#
+#     - calibrate_roi_yolo(model_path="in/best.pt", images_dir="tmp", show_preview=True) -> Dict[face, ROI] | None
+#         Calibration automatique (bbox) :
+#           * charge un modèle Ultralytics YOLO,
+#           * détecte la meilleure bbox (max conf) par face,
+#           * optionnel : affiche une preview (rectangle + label),
+#           * sauvegarde ensuite via save_calibration().
+#
+#  Calibration manuelle (OpenCV) :
+#     - calibrate_single_face(image_path, face_name, mode="bbox"|"quad") -> ROI | None
+#         * bbox : 2 clics (coin haut-gauche, coin bas-droit)
+#         * quad : 4 clics dans l'ordre TL, TR, BR, BL
+#       Touches :
+#         - ENTER : valider si le bon nombre de points est saisi
+#         - r     : reset / recommencer
+#         - q     : quitter (annule)
+#     - _mouse_callback(...) : enregistre les clics, dessine points/rect/quad et guide l’utilisateur.
+#
+#  Validation / robustesse :
+#     - validate_roi_dict(roi_data) :
+#         vérifie présence des 6 faces + formats bbox/quad + dimensions minimales.
+#
+#  UI console (partiel) :
+#     - calibration_menu() : menu console (actuellement expose surtout les modes QUAD)
+#
+#  Dépendances :
+#     - OpenCV (cv2), NumPy
+#     - Ultralytics YOLO (optionnel) : activé si import OK (YOLO_AVAILABLE)
+#     - colorama : pour sorties console colorées (init autoreset)
+#
+#  Fichiers attendus / générés :
+#     - Entrée images : tmp/{U,D,L,R,F,B}.jpg
+#     - Sortie calibration : rubiks_calibration.json (par défaut)
 # ============================================================================
+
 
 from typing import Dict, Tuple, Optional, Union
 import numpy as np
 import os, json, cv2
-from ultralytics import YOLO
+try:
+    from ultralytics import YOLO
+    YOLO_AVAILABLE = True
+except ImportError:
+    YOLO_AVAILABLE = False
+    #print("YOLO non disponible - calibration manuelle uniquement")
 from colorama import Fore, Style, init
 init(autoreset=True)
 
@@ -264,6 +304,9 @@ def calibrate_roi_yolo(model_path="in/best.pt", images_dir="tmp", show_preview=T
     Calibration automatique des ROI à l’aide de YOLO.
     Affiche les infos de détection et sauvegarde les ROI.
     """
+    if not YOLO_AVAILABLE:
+        print("❌ YOLO non installé")
+        return None    
     faces = ["U", "D", "L", "R", "F", "B"]
     roi_data = {}
 
@@ -327,9 +370,9 @@ def calibrate_roi_yolo(model_path="in/best.pt", images_dir="tmp", show_preview=T
 
 def calibration_menu():
     print("\n=== MENU CALIBRATION ROI ===")
-    print("1) bbox (même ROI)")
-    print("2) bbox (par face)")
-    print("3) bbox YOLO")
+    #print("1) bbox (même ROI)")
+    #print("2) bbox (par face)")
+    #print("3) bbox YOLO")
     print("4) QUAD (même quad)")
     print("5) QUAD (par face)")
     print("6) Quitter")

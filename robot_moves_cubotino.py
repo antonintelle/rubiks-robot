@@ -1,20 +1,80 @@
-"""robot_moves_cubotino.py
+#!/usr/bin/env python3
+# ============================================================================
+#  robot_moves_cubotino.py
+#  -----------------------
+#  Objectif :
+#     Adapter l’algorithme **Cubotino** (conversion d’une solution Kociemba/Singmaster
+#     en séquence robot F/S/R) à **ton hardware** (servos via robot_servo.py).
+#     Le module :
+#       - parse une solution Singmaster ("R U R' U' ..."),
+#       - la convertit au format attendu par Cubotino_T_moves (U1R2...),
+#       - compile une séquence robot “Cubotino-like” (F/S/R),
+#       - exécute réellement les primitives mécaniques (flip/spin/rotate),
+#       - propose aussi des helpers dédiés à la **capture des faces** (yaw/return).
+#
+#  Dépendances :
+#     - Cubotino_T_moves.py (obligatoire) : robot_required_moves(...) (conversion Kociemba -> F/S/R)
+#     - robot_servo.py (optionnel) : pilotage réel des servos (sinon mode simulation / Windows)
+#
+#  Entrées principales (API “exécution solution”) :
+#     - execute_solution(singmaster, start_mode="UFR", dry_run=False, verbose=True,
+#                        stop_flag=None, progress_callback=None) -> str
+#         Point d’entrée utilisateur :
+#           * compile_robot_moves(...) -> moves_str "F1S3R1..."
+#           * execute_robot_moves(...) -> exécution step-by-step
+#         Retourne la chaîne de moves F/S/R exécutée.
+#
+#     - compile_robot_moves(singmaster, start_mode="UFR", informative=False) -> (moves_str, tot_moves)
+#         Compile uniquement (sans exécution) une solution Singmaster en mouvements robot.
+#
+#  Parsing / normalisation Singmaster :
+#     - parse_singmaster(solution) -> List[str]
+#         Accepte formats :
+#           * "R U R' U'" (avec espaces)
+#           * "RUR'U'" (sans espaces)
+#         Supporte la normalisation des quotes typographiques (’ -> ').
+#
+#     - singmaster_to_cubotino_kociemba(tokens) -> str
+#         Convertit tokens URFDLB vers le format compact Cubotino :
+#           - 1 : 90° CW
+#           - 2 : 180°
+#           - 3 : 90° CCW (prime)
+#         Refuse explicitement x/y/z (rotations de cube).
+#
+#  Exécution des mouvements robot (format Cubotino) :
+#     - execute_robot_moves(moves, opt, stop_flag=None, progress_callback=None)
+#         Exécute une chaîne de paires :
+#           * Fk : flip(s)
+#           * Sx : spin du cube (capot ouvert)
+#           * Rx : rotation layer bas (capot fermé)
+#         Émet des événements progress_callback :
+#           - "execute_move" (status executing/completed)
+#           - "execution_finished" / "execution_stopped"
+#
+#  Options d’exécution :
+#     - ExecOptions(start_mode="UFR", dry_run=False, verbose=True)
+#         * dry_run : simule la cinématique en mettant à jour hw.cube_pos / hw.cover_pos
+#         * verbose : logs console des actions HW
+#
+#  Primitives hardware (wrappers) :
+#     - flip_up(), flip_open(), spin_out(direction), spin_mid()
+#         -> appellent robot_servo si dispo, sinon mode simulation (Windows / SERVO_AVAILABLE=False)
+#
+#  Helpers capture (scan des faces / orientation) :
+#     - step_flip(), step_yaw(dir_="D"), step_yaw90_to_mid(dir_="D")
+#     - scan_yaw_out(direction), scan_yaw_home()
+#     - return_to_u_fr_l(), return_to_u_fr_l2(), return_to_u_fr()
+#         Utilitaires de repositionnement du cube après séquences de capture.
+#
+#  Arrêt rapide / sécurité :
+#     - stop_flag (threading.Event typiquement) :
+#         Vérifié avant chaque action ; lève ExecutionStopped si stop demandé.
+#
+#  Exécution directe (__main__) :
+#     - CLI :
+#         python robot_moves_cubotino.py "R U R' U'" --start UFR --dry-run --quiet
+# ============================================================================
 
-Adapter *Cubotino -> ton hardware*.
-
-But : réutiliser au maximum l'algo Cubotino qui convertit une solution Kociemba
-en séquence robot (F/S/R), puis exécuter cette séquence via `robot_servo.py`.
-
-Entrée : solution Singmaster classique (ex: "R U R' U' F2").
-
-Sortie : exécution réelle sur robot à 2 servos (Cubotino-like) :
- - Fk : k flips (flip_up)
- - Sx : spin du cube (capot ouvert)
- - Rx : rotation du layer du bas (capot fermé)
-
-Ce fichier suppose que tu as le fichier Cubotino original `Cubotino_T_moves.py`
-à portée d'import (copié dans ton projet, ou `sys.path` ajusté).
-"""
 
 from __future__ import annotations
 

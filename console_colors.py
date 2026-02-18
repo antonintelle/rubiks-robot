@@ -1,9 +1,41 @@
+#!/usr/bin/env python3
 # ============================================================================
 #  console_colors.py
 #  -----------------
-#  Utilitaire pour affichage coloré multiplateforme (Linux / Windows)
-#  Utilise colorama pour supporter les codes ANSI sur tous les systèmes.
+#  Objectif :
+#     Petit utilitaire d’affichage console **coloré et lisible** (Linux / Windows),
+#     afin d’uniformiser les sorties texte des scripts du projet.
+#     S’appuie sur `colorama` pour garantir le support des codes ANSI, notamment
+#     sous Windows.
+#
+#  Entrées principales (API) :
+#     - print_header(title: str)
+#         Affiche un en-tête “bannière” : lignes cyan + titre centré en jaune.
+#
+#     - print_menu_option(index: str, text: str, color=Fore.GREEN)
+#         Affiche une option de menu stylée (index coloré + texte en blanc).
+#
+#     - print_warning(msg: str)
+#         Affiche un warning préfixé ⚠️, en jaune.
+#
+#     - print_error(msg: str)
+#         Affiche une erreur préfixée ❌, en rouge.
+#
+#     - print_success(msg: str)
+#         Affiche un succès préfixé ✅, en vert.
+#
+#  Initialisation :
+#     - colorama.init(autoreset=True)
+#       -> évite de “polluer” les prints suivants (reset automatique des styles).
+#
+#  Dépendances :
+#     - colorama (init, Fore, Style)
+#
+#  Notes :
+#     - Module volontairement minimal : uniquement des helpers d’affichage,
+#       sans logique métier.
 # ============================================================================
+
 
 from colorama import init, Fore, Style
 

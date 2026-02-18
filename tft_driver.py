@@ -1,4 +1,48 @@
-# tft_driver.py
+#!/usr/bin/env python3
+# ============================================================================
+#  tft_driver.py
+#  -------------
+#  Objectif :
+#     Fournir une **abstraction minimale** de driver TFT :
+#       - un driver “dummy” (no-op) pour fallback,
+#       - un driver de **simulation** qui écrit l’état d’un écran TFT dans un fichier
+#         texte afin de pouvoir suivre l’exécution du pipeline sans écran physique.
+#
+#  Entrées principales (API) :
+#     - class DummyTFT
+#         Driver de secours : expose l’interface attendue (clear/text/bar/show)
+#         mais ne fait rien. Utile si aucun écran n’est présent.
+#
+#     - class ConsoleTFTFile(path="tmp/tft_screen.txt", width=24)
+#         “Faux TFT” : maintient 2 lignes de texte + une barre de progression,
+#         puis écrit l’affichage dans un fichier à chaque show().
+#
+#  Interface commune (méthodes) :
+#     - clear() : efface l’écran (2 lignes vides + barre à 0)
+#     - text(line, row=0) : écrit une ligne (row 0 ou 1), tronque/pad à width
+#     - bar(pct) : met à jour la barre (pct clampé dans [0.0, 1.0])
+#     - show() : rend l’état courant
+#
+#  Sortie / visualisation :
+#     - Écrit un fichier texte (par défaut tmp/tft_screen.txt) au format :
+#         [TFT]
+#         <ligne 0>
+#         <ligne 1>
+#         [####-----...]
+#     - Commandes utiles :
+#         tail -f tmp/tft_screen.txt    (suivre en live)
+#         > tmp/tft_screen.txt          (remettre à zéro)
+#
+#  Robustesse :
+#     - Écriture “quasi atomique” :
+#         écrit d’abord dans <path>.tmp puis os.replace(...) (atomique sous Linux)
+#
+#  Notes :
+#     - Ce module ne gère pas de rendu graphique réel : il fournit juste une API
+#       stable pour l’intégration (tft_listener / main_robot_solveur).
+# ============================================================================
+
+
 from __future__ import annotations
 
 class DummyTFT:

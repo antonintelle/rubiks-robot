@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+# ============================================================================
+#  Cubotino_T_moves.py
+#  -------------------
+#  NOTE / CRÉDITS :
+#     Ce fichier est **copié / issu du projet CUBOTino** (Andrea Favero) et est
+#     utilisé ici pour convertir une solution Kociemba (URFDLB) en mouvements
+#     robot (S/F/R) compatibles avec la cinématique “Cubotino”.
+#
+#     Un grand merci à Andrea Favero et au projet CUBOTino pour le partage de ce
+#     code et de l’approche mécanique/logicielle.
+#
+#     Auteur original : Andrea Favero (10 April 2024)
+#     Source / projet : CUBOTino (voir en-tête original du fichier)
+# ============================================================================
+
 #!/usr/bin/python
 # coding: utf-8
 

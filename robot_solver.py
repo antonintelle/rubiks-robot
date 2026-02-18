@@ -1,69 +1,86 @@
+#!/usr/bin/env python3
 # ============================================================================
 #  robot_solver.py
-#  ----------------
+#  --------------
 #  Objectif :
-#     Classe principale pour orchestrer toutes les étapes du robot
-#     depuis la capture des images jusqu'à la résolution et l'exécution.
+#     Orchestrer le **pipeline complet** du robot solveur, depuis la capture des
+#     6 faces jusqu’à la résolution et (optionnellement) l’exécution physique
+#     des mouvements, avec une gestion standardisée de la progression via callbacks.
 #
-#  Pipeline (méthode run) :
-#     1) capture_images  : acquisition des 6 faces (F,R,B,L,U,D) via caméra
-#     2) calibrate_roi      : calibration automatique YOLO (optionnelle)
-#     3) detect_colors      : détection des couleurs par vision (FacesDict)
-#     4) convert_to_kociemba: conversion en string Kociemba 54 (URFDLB)
-#     5) solve              : appel au solveur pour obtenir la séquence
-#     6) execute_moves      : exécution physique des mouvements
-#
-#  Classes :
-#     - CameraInterface : interface générique pour plugger une caméra réelle
-#     - RobotCubeSolver : classe principale pilotant le pipeline complet
-#
-#  Méthodes clés de RobotCubeSolver :
-#     - capture_images()                      : capture avec progression
-#     - detect_colors()                       : détection avec progression
-#     - convert_to_kociemba()                 : conversion vers format solveur
-#     - solve()                               : appelle solver_wrapper.solve_cube
-#     - execute_moves()                       : exécution avec progression
-#     - run(callbacks...)                     : pipeline complet avec callbacks
-#     - emergency_stop()                      : arrêt d'urgence
-#
-#  Entrées :
-#     - Images des 6 faces (F.jpg, R.jpg, B.jpg, L.jpg, U.jpg, D.jpg)
-#     - Fichiers de calibration (optionnels avec auto_calibrate)
-#
-#  Sorties :
-#     - CubeString (URFDLB, 54 caractères)
-#     - Solution (suite de mouvements Singmaster)
-#
-# ============================================================================
-# ============================================================================
-#  Pipeline visuel avec callbacks
+#  Pipeline (méthode run) — SCHÉMA ESSENTIEL :
 #
 #        [Caméra / Images F,R,B,L,U,D]
 #                       │
 #                       ▼
-#             capture_images()
-#       
+#             1) capture_images()
 #                       │
 #                       ▼
-#         calibrate_roi_yolo() [optionnel]
+#        2) calibrate_roi_auto()   [optionnel : YOLO]
 #                       │
 #                       ▼
-#              detect_colors()
-#        
+#             3) detect_colors()
 #                       │
 #                       ▼
-#         convert_to_kociemba()
+#          4) convert_to_kociemba()
 #     → CubeString (54 caractères URFDLB)
 #                       │
 #              ┌────────┴─────────┐
 #              │                  │
 #              ▼                  ▼
-#        solve(cube_string)   (do_solve=False)
-#     → Solution mouvements
+#       5) solve(cube_string)   (do_solve=False)
+#     → Solution (Singmaster)
 #              │
 #              ▼
-#        execute_moves()
-#    
+#       6) execute_moves(solution) (do_execute=True)
+#
+#  Progress / callbacks :
+#     - Toutes les étapes émettent des événements structurés via self.emit(...)
+#       (progress.emit), typiquement : *_started, *_completed, *_failed,
+#       et des événements “granulaires” : capture_face, detect_face, execute_move...
+#
+#  Classes :
+#     - CameraInterface :
+#         Interface générique (placeholder) pour brancher une caméra réelle.
+#     - RobotCubeSolver :
+#         Classe principale contenant l’état (cube_string, solution, stop_flag)
+#         et les 6 étapes du pipeline + run().
+#
+#  Entrées attendues :
+#     - Captures : tmp/{F,R,B,L,U,D}.jpg (produites par capture_all_faces)
+#     - Calibration ROI : rubiks_calibration.json (obligatoire pour la vision)
+#     - (Option) YOLO : in/best.pt + ultralytics pour auto-calibrer ROI
+#
+#  Sorties :
+#     - cube_string : chaîne URFDLB (54 caractères, valide pour solveur)
+#     - solution    : suite de mouvements Singmaster ("R U R' ...") (si do_solve)
+#     - exécution   : mouvements robot (si do_execute) via robot_moves_cubotino
+#
+#  Fonctions clés (par étape) :
+#     1) capture_images():
+#        - Initialise CameraInterface2, allume LEDs, reset robot,
+#          verrouille AE/AWB (lock_for_scan_multiface), puis capture_all_faces().
+#
+#     2) calibrate_roi_auto():
+#        - Optionnel : calibrate_roi_yolo(...) si YOLO disponible.
+#
+#     3) detect_colors():
+#        - Charge ROI (load_calibration), puis detect_colors_for_faces(...)
+#          et simule une progression par face via events detect_face.
+#
+#     4) convert_to_kociemba():
+#        - convert_to_kociemba(color_results, mode="robot_cam", strategy="center_hsv")
+#          + validations fortes (len=54, alphabet URFDLB, 9× chaque lettre).
+#
+#     5) solve():
+#        - solve_cube(...) via solver_wrapper ; gère CubeAlreadySolved.
+#
+#     6) execute_moves():
+#        - execute_solution(...) via robot_moves_cubotino, avec stop_flag,
+#          et remonte la progression vers le callback (execute_move, finished/stopped).
+#
+#  Contrôle arrêt d’urgence :
+#     - stop_flag (threading.Event) : lu pendant l’exécution mouvements.
+#     - emergency_stop() / reset_stop_flag().
 # ============================================================================
 
 import os
@@ -75,12 +92,19 @@ from process_images_cube import detect_colors_for_faces
 from processing_rubiks import convert_to_kociemba
 from solver_wrapper import solve_cube
 from robot_moves_cubotino import execute_solution,ExecutionStopped
-from calibration_roi import calibrate_roi_yolo
 from capture_photo_from_311 import CameraInterface2
 import traceback
 from types_shared import FaceResult, FacesDict
 from progress import emit as _emit
-from ultralytics.solutions import solutions
+
+
+try:
+    from calibration_roi import calibrate_roi_yolo
+    from ultralytics.solutions import solutions
+    YOLO_AVAILABLE = True
+except ImportError:
+    YOLO_AVAILABLE = False
+    calibrate_roi_yolo = None
 
 class CameraInterface:
     """Interface générique pour une caméra réelle"""
@@ -172,19 +196,22 @@ class RobotCubeSolver:
             def flip_cb():
                 flip_up()
 
-            camera.lock_for_scan_multiface(
-                flip_cb=flip_cb,
-                n_samples=4,
-                aggregate="median",
-                warmup_s=0.8,
-                settle_after_flip_s=0.25,
-                per_pose_timeout_s=1.2,
-                stability_pts=6,
-                tol=0.05,
-                min_exp=8000,
-                max_gain=8.0,
-                debug=True
-            )
+            #camera.lock_for_scan_multiface(
+            #    flip_cb=flip_cb,
+            #    n_samples=4,
+            #    aggregate="median",
+            #    warmup_s=0.8,
+            #    settle_after_flip_s=0.25,
+            #    per_pose_timeout_s=1.2,
+            #    stability_pts=6,
+            #    tol=0.05,
+            #    min_exp=8000,
+            #    max_gain=8.0,
+            #    debug=True
+            #)
+
+            camera.lock_for_scan_multiface_cfg(flip_cb=flip_cb,debug=True)
+
             self.emit("camera_lock_done",
                     step="capture",
                     face="LOCK",
@@ -295,6 +322,9 @@ class RobotCubeSolver:
         Args:
             show_preview: afficher les résultats de détection
         """
+        if not YOLO_AVAILABLE:
+            print("❌ YOLO non installé")
+            return
         print("🔧 Calibration automatique YOLO...")
         calibrate_roi_yolo(show_preview=show_preview)
         print("✅ Calibration terminée")

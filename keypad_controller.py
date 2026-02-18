@@ -1,10 +1,51 @@
 #!/usr/bin/env python3
-# ============================================================
-# keypad_controller.py  –  Gestion du clavier matriciel 4x4 (lgpio)
-# ============================================================
-# Compatible Raspberry Pi OS Bookworm, sans sudo.
-# Mapping confirmé avec GPIO 22,19,16,20,26,13,5,6
-# ------------------------------------------------------------
+# ============================================================================
+#  keypad_controller.py
+#  --------------------
+#  Objectif :
+#     Gérer un **clavier matriciel 4x4** connecté à un Raspberry Pi via `lgpio`
+#     (compatible Raspberry Pi OS Bookworm, sans sudo) et déclencher une callback
+#     à chaque **nouvelle touche pressée**.
+#
+#  Matériel / brochage validé :
+#     - Lignes (ROW_PINS)   : [26, 13, 5, 6]
+#     - Colonnes (COL_PINS) : [22, 19, 16, 20]
+#     - Disposition logique (KEYPAD) :
+#         ["1","4","7","*"],
+#         ["2","5","8","0"],
+#         ["3","6","9","#"],
+#         ["A","B","C","D"]
+#
+#  Entrées principales (API) :
+#     - class KeypadController(callback=None, poll_delay=0.05)
+#         Initialise le clavier, configure les GPIO, puis démarre un thread de polling.
+#         Paramètres :
+#           * callback(key): fonction appelée lors d’un appui (clé "1", "A", "#", etc.)
+#           * poll_delay   : intervalle entre deux scans de la matrice
+#
+#     - cleanup()
+#         Arrête proprement le thread de scrutation et ferme le gpiochip (libère GPIO).
+#
+#  Fonctionnement interne :
+#     - _poll_keys() :
+#         Boucle de balayage :
+#           1) met une ligne à 0 (active),
+#           2) lit chaque colonne (pull-up) : lecture à 0 => touche pressée,
+#           3) anti-répétition via set `pressed` (détecte uniquement le front descendant),
+#           4) exécute la callback dans un thread dédié (non bloquant),
+#           5) remet la ligne à 1, puis passe à la suivante.
+#
+#  Mode test (standalone) :
+#     - main_keypad()
+#         Lance un test console : affiche chaque touche détectée jusqu’à Ctrl+C.
+#     - __main__ : exécute main_keypad()
+#
+#  Dépendances :
+#     - lgpio (GPIO bas niveau)
+#     - threading (thread de scan + thread callback)
+#     - time (temporisations)
+# ============================================================================
+
 
 import lgpio
 import threading

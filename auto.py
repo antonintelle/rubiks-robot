@@ -1,7 +1,46 @@
 #!/usr/bin/env python3
-# ============================================================
-# keypad_autolearn.py - Apprentissage interactif du clavier 4x4
-# ============================================================
+# ============================================================================
+#  auto.py  (keypad_autolearn.py) - Apprentissage interactif clavier 4x4
+#  --------------------------------------------------------------------
+#  Objectif :
+#     Outil de “mapping” pour identifier automatiquement le câblage d’un clavier
+#     matriciel 4x4 sur Raspberry Pi, en testant les combinaisons de GPIO et en
+#     construisant une table de correspondance touche -> (GPIO_out, GPIO_in).
+#
+#  Principe :
+#     - Toutes les broches candidates (ALL_PINS) sont mises en entrée avec pull-up.
+#     - Le programme “balaye” ensuite chaque broche en la passant temporairement
+#       en sortie à 0, puis lit les autres broches : si une broche lue passe à 0,
+#       cela indique qu’une touche relie la paire (out_pin, in_pin).
+#     - L’utilisateur saisit le nom de la touche (ex: "1", "2", "A"...), et le
+#       script enregistre la paire détectée dans un dictionnaire mapping.
+#
+#  Configuration matérielle (GPIO testés) :
+#     - ALL_PINS = [5, 6, 13, 16, 19, 20, 22, 26]
+#     - Accès GPIO via lgpio (chip = gpiochip_open(0))
+#     - Pull-up activé sur chaque pin en mode entrée (SET_PULL_UP)
+#
+#  Entrée principale :
+#     - Script standalone (exécution directe) : boucle interactive jusqu’à Ctrl+C.
+#
+#  Sorties / résultats :
+#     - Affiche un résumé : touche -> (GPIOout ↔ GPIOin)
+#     - Déduit une proposition de configuration :
+#         * ROW_PINS = liste des out_pin vus
+#         * COL_PINS = liste des in_pin vus
+#     - Génère un tableau KEY_PAD “approximatif” (matrice rows x cols) à partir
+#       des mappings saisis.
+#
+#  Dépendances :
+#     - lgpio (accès GPIO bas niveau)
+#     - time (temporisations de balayage)
+#
+#  Notes :
+#     - Le balayage utilise une petite temporisation (2ms) après claim_output pour
+#       laisser le niveau se stabiliser.
+#     - En fin de programme : fermeture du chip (gpiochip_close) en finally.
+#     - Le mapping dépend de l’ordre de détection et des pins choisies dans ALL_PINS.
+# ============================================================================
 
 import lgpio
 import time
