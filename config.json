@@ -1,0 +1,237 @@
+{
+  "leds": {
+    "enabled": true,
+    "anneau1": {
+      "pin": 18,
+      "count": 24,
+      "brightness": 0.3,
+      "enabled": true,
+      "scan": {
+        "enabled": true,
+        "mode": "2_leds_preset",
+        "brightness": 0.28,
+        "brightness_max": 0.55,
+        "led_indices": [0,1,2,3,4,5,6,7,8,9,10,11,13,12,14,15,16,17,18,19,20,21,22,23],
+        "preset": "white",
+        "gradient": false
+      }
+    },
+    "anneau2": {
+      "pin": 13,
+      "count": 12,
+      "brightness": 0.3,
+      "enabled": true,
+      "scan": {
+        "enabled": true,
+        "mode": "2_leds_preset",
+        "brightness": 0.02,
+        "brightness_max": 0.15,
+        "led_indices": [0,8,3,5],
+        "preset": "white",
+        "gradient": false
+      }
+    }
+  },
+
+  "camera": {
+    "resolution": [1280, 720],
+    "rotation": 270,
+    "lock_profile_active": "ambiance_avec_leds_journee_2",
+
+    "lock_base": {
+      "n_samples": 4,
+      "warmup_s": 1.2,
+      "settle_after_flip_s": 0.35,
+      "per_pose_timeout_s": 1.8,
+      "stability_pts": 8,
+      "tol": 0.05,
+      "aggregate": "median",
+      "ae_metering": "centreweighted",
+      "awb_mode": "auto",
+      "reject_sat_pct": 0.8
+    },
+    "lock_profiles": {
+      "ambiance_avec_leds_journee": {
+        "ev": 0.0,
+        "min_gain": 0.0,
+        "max_gain": 8.0,
+        "min_exp": 3000,
+        "max_exp": 33000,
+        "n_samples": 4,
+        "per_pose_timeout_s": 2.2,
+        "stability_pts": 10,
+        "tol": 0.05,
+        "ae_metering": "matrix",
+        "awb_mode": "auto",
+        "reject_sat_pct": 3.0,
+        "led_scan": {
+          "anneau1": { "enabled": true, "brightness": 0.28, "preset": "white" },
+          "anneau2": { "enabled": true, "brightness": 0.02, "preset": "white" }
+        }
+      },
+    "ambiance_avec_leds_journee_2": {
+      "ev": -0.1,
+      "min_gain": 0.0,
+      "max_gain": 8.0,
+      "min_exp": 3000,
+      "max_exp": 33000,
+      "n_samples": 4,
+      "per_pose_timeout_s": 2.2,
+      "stability_pts": 10,
+      "tol": 0.05,
+      "ae_metering": "matrix",
+      "awb_mode": "auto",
+      "reject_sat_pct": 6.0,
+      "led_scan": {
+        "anneau1": { "enabled": true, "brightness": 0.34, "preset": "white" },
+        "anneau2": { "enabled": true, "brightness": 0.04, "preset": "white" }
+        }      
+    },
+      "ambiance_avec_leds_lumineux": {
+        "ev": -0.1,
+        "min_gain": 0.0,
+        "max_gain": 6.0,
+        "min_exp": 2000,
+        "max_exp": 20000,
+        "n_samples": 4,
+        "per_pose_timeout_s": 2.2,
+        "stability_pts": 10,
+        "tol": 0.05,
+        "ae_metering": "matrix",
+        "awb_mode": "auto",
+        "reject_sat_pct": 3.0,
+        "led_scan": {
+          "anneau1": { "enabled": true, "brightness": 0.22, "preset": "white" },
+          "anneau2": { "enabled": true, "brightness": 0.02, "preset": "white" }
+        }
+      },
+
+      "ambiance_avec_leds_soleil_variable": {
+        "ev": -0.15,
+        "min_gain": 0.0,
+        "max_gain": 6.0,
+        "min_exp": 3000,
+        "max_exp": 30000,
+        "n_samples": 4,
+        "per_pose_timeout_s": 2.2,
+        "stability_pts": 10,
+        "tol": 0.06,
+        "ae_metering": "matrix",
+        "awb_mode": "auto",
+        "reject_sat_pct": 5.0,
+        "led_scan": {
+          "anneau1": { "enabled": true, "brightness": 0.24, "preset": "white" },
+          "anneau2": { "enabled": true, "brightness": 0.02, "preset": "white" }
+        }
+      },
+
+      "soir_plafond_leds": {
+        "ev": -0.1,
+        "min_gain": 0.0,
+        "max_gain": 10.0,
+        "min_exp": 4000,
+        "max_exp": 33000,
+        "n_samples": 4,
+        "per_pose_timeout_s": 2.2,
+        "stability_pts": 10,
+        "tol": 0.06,
+        "ae_metering": "centreweighted",
+        "awb_mode": "auto",
+        "reject_sat_pct": 4.0,
+        "led_scan": {
+          "anneau1": { "enabled": true, "brightness": 0.30, "preset": "white" },
+          "anneau2": { "enabled": true, "brightness": 0.03, "preset": "white" }
+        }
+      },
+
+      "soir_plafond_leds_dim": {
+        "ev": 0.0,
+        "min_gain": 0.8,
+        "max_gain": 12.0,
+        "min_exp": 6000,
+        "max_exp": 33333,
+        "n_samples": 4,
+        "per_pose_timeout_s": 2.2,
+        "stability_pts": 10,
+        "tol": 0.06,
+        "ae_metering": "centreweighted",
+        "awb_mode": "auto",
+        "reject_sat_pct": 4.0,
+        "led_scan": {
+          "anneau1": { "enabled": true, "brightness": 0.34, "preset": "white" },
+          "anneau2": { "enabled": true, "brightness": 0.04, "preset": "white" }
+        }
+      },
+
+      "classroom_diffuse": {
+        "ev": 0.0,
+        "min_gain": 0.5,
+        "max_gain": 8.0,
+        "min_exp": 4000,
+        "max_exp": 30000,
+        "ae_metering": "centreweighted",
+        "awb_mode": "auto",
+        "reject_sat_pct": 0.8,
+        "led_scan": {
+          "anneau1": { "enabled": true, "brightness": 0.26, "preset": "white" },
+          "anneau2": { "enabled": true, "brightness": 0.02, "preset": "white" }
+        }
+      },
+
+      "spots_plafond": {
+        "ev": -0.3,
+        "min_gain": 0.0,
+        "max_gain": 6.0,
+        "min_exp": 4000,
+        "max_exp": 12000,
+        "n_samples": 4,
+        "settle_after_flip_s": 0.4,
+        "per_pose_timeout_s": 2.2,
+        "stability_pts": 10,
+        "tol": 0.04,
+        "ae_metering": "spot",
+        "awb_mode": "auto",
+        "reject_sat_pct": 0.5,
+        "led_scan": {
+          "anneau1": { "enabled": true, "brightness": 0.20, "preset": "white" },
+          "anneau2": { "enabled": false }
+        }
+      },
+
+      "daylight_skylight_reflect": {
+        "ev": -0.4,
+        "min_gain": 0.0,
+        "max_gain": 4.0,
+        "min_exp": 3000,
+        "max_exp": 8000,
+        "n_samples": 4,
+        "per_pose_timeout_s": 2.2,
+        "stability_pts": 10,
+        "tol": 0.04,
+        "ae_metering": "spot",
+        "awb_mode": "auto",
+        "reject_sat_pct": 0.5,
+        "led_scan": {
+          "anneau1": { "enabled": true, "brightness": 0.18, "preset": "white" },
+          "anneau2": { "enabled": false }
+        }
+      },
+
+      "low_light_evening": {
+        "ev": 0.2,
+        "min_gain": 0.8,
+        "max_gain": 10.0,
+        "min_exp": 8000,
+        "max_exp": 30000,
+        "per_pose_timeout_s": 2.2,
+        "ae_metering": "centreweighted",
+        "awb_mode": "auto",
+        "reject_sat_pct": -1.0,
+        "led_scan": {
+          "anneau1": { "enabled": true, "brightness": 0.34, "preset": "white" },
+          "anneau2": { "enabled": true, "brightness": 0.04, "preset": "white" }
+        }
+      }
+    }
+  }
+}
