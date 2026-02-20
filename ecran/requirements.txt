@@ -1,0 +1,4 @@
+luma.lcd==2.11.0
+luma.core==2.5.2
+Pillow==12.0.0
+psutil==7.1.3
