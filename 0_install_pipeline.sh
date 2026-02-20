@@ -1,4 +1,5 @@
 #!/bin/bash
+<<<<<<< HEAD
 # ============================================================================
 #  0_install_pipeline.sh  (v6.0)
 #  -----------------------------
@@ -73,6 +74,17 @@
 #     - Affiche le chemin du venv.
 # ============================================================================
 
+=======
+# ============================================================
+#  0_install_pipeline.sh (v6.0)
+#  Installation complète du pipeline Rubik's Cube - Raspberry Pi
+#
+#  ✅ Réentrant (mode rapide --fast)
+#  ✅ Choix interactif : réinstallation complète ou mise à jour
+#  ✅ Utilise requirements_pi.txt
+#  ✅ Exécute check_dependencies.py
+# ============================================================
+>>>>>>> screen-gui
 
 set -e
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -142,6 +154,7 @@ sudo apt install -y \
   build-essential \
   dos2unix \
   git curl wget pkg-config \
+<<<<<<< HEAD
   rpicam-apps \
   python3-spidev \
   python3-rpi.gpio \
@@ -155,6 +168,9 @@ echo "ℹ️ pigpiod sera démarré automatiquement au prochain reboot."
 
 echo "🔧 Activation du SPI..."
 sudo raspi-config nonint do_spi 0
+=======
+  rpicam-apps
+>>>>>>> screen-gui
 
 # ------------------------------------------------------------
 # 3️⃣  Création / activation de l’environnement virtuel
@@ -227,6 +243,7 @@ except Exception as e:
     print("⚠️ Tkinter non fonctionnel :", e)
 PY
 
+<<<<<<< HEAD
 echo "🖥️ Vérification écran TFT ST7735..."
 python3 - <<'PY'
 try:
@@ -237,6 +254,8 @@ except Exception as e:
     print("🔴 ERREUR : impossible d'importer luma.lcd/st7735 :", e)
 PY
 
+=======
+>>>>>>> screen-gui
 # ------------------------------------------------------------
 # 7️⃣  Conversion CRLF → LF
 # ------------------------------------------------------------
@@ -254,6 +273,7 @@ else
 fi
 
 # ------------------------------------------------------------
+<<<<<<< HEAD
 # 9️⃣  Création des dossiers de travail avec bonnes permissions
 # ------------------------------------------------------------
 echo
@@ -297,6 +317,8 @@ done
 echo "   ✅ Dossiers de travail prêts"
 
 # ------------------------------------------------------------
+=======
+>>>>>>> screen-gui
 # 🔟  Informations finales
 # ------------------------------------------------------------
 echo

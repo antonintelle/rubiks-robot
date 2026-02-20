@@ -14,6 +14,12 @@ Pillow>=10.0.0
 kociemba>=1.2.0
 RubikTwoPhase>=1.0.0
 
+<<<<<<< HEAD
+=======
+# === Détection automatique (YOLOv8) ===
+ultralytics>=8.0.0
+
+>>>>>>> screen-gui
 # === Caméra moderne (libcamera / Picamera2) ===
 # installé via apt, NE PAS pip install
 # -> sudo apt install python3-picamera2
@@ -35,6 +41,9 @@ rpi_ws281x>=5.0.0
 # === Contrôle clavier matriciel (GPIO moderne) ===
 lgpio>=0.2.2
 gpiozero>=2.0
+<<<<<<< HEAD
 
 # ECRAN TFT
 luma.lcd>=2.11.0
+=======
+>>>>>>> screen-gui

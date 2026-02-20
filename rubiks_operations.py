@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #!/usr/bin/env python3
 # ============================================================================
 #  rubiks_operations.py
@@ -105,13 +106,48 @@
 # ============================================================================
 
 
+=======
+# rubiks_operations.py - Module des opérations Rubik's Cube
+# ============================================================================
+# RÉSUMÉ : Module abstrait qui définit toutes les opérations disponibles
+#          pour le système de reconnaissance et résolution du Rubik's Cube.
+#          
+# OBJECTIF : Séparer la logique métier de l'interface utilisateur pour permettre :
+#            - Un mode texte/CLI
+#            - Un GUI personnalisé (Tkinter, PyQt, web, etc.)
+#            - Une API REST
+#            - Des tests unitaires
+#
+# ARCHITECTURE :
+#   - Toutes les fonctions retournent des dictionnaires standardisés
+#   - Gestion des erreurs avec try/except
+#   - Documentation complète de chaque fonction
+#   - Aucune interaction directe avec l'utilisateur (input/print minimal)
+#   - Paramètres explicites pour tous les modes de fonctionnement
+#
+# UTILISATION :
+#   from rubiks_operations import RubiksOperations
+#   
+#   ops = RubiksOperations()
+#   result = ops.calibrate_zones()
+#   if result['success']:
+#       print(result['data'])
+#   else:
+#       print(result['error'])
+# ============================================================================
+
+>>>>>>> screen-gui
 import os
 import glob
 import json
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, asdict
 from enum import Enum
+<<<<<<< HEAD
 import traceback
+=======
+
+>>>>>>> screen-gui
 
 class DebugMode(Enum):
     """Modes de debug disponibles"""
@@ -207,19 +243,29 @@ class RubiksOperations:
             Dict avec success, data (couleurs calibrées), error
         """
         try:
+<<<<<<< HEAD
             from calibration_colors import calibrate_colors_interactive
+=======
+            from process_images_cube import calibrate_colors_interactive
+>>>>>>> screen-gui
             calibrate_colors_interactive()
             return OperationResult(
                 success=True,
                 message="Calibration des couleurs terminée"
             ).to_dict()
         except Exception as e:
+<<<<<<< HEAD
             import traceback
             traceback.print_exc()
             tb = traceback.format_exc()
             return OperationResult(
                 success=False,
                 error=f"Erreur lors de la calibration des couleurs: {e}\n\nTRACEBACK:\n{tb}"
+=======
+            return OperationResult(
+                success=False,
+                error=f"Erreur lors de la calibration des couleurs: {str(e)}"
+>>>>>>> screen-gui
             ).to_dict()
 
     def get_calibration_status(self) -> Dict:
@@ -231,7 +277,11 @@ class RubiksOperations:
         """
         try:
             from calibration_rubiks import get_calibration_stats, load_calibration
+<<<<<<< HEAD
             from calibration_colors import load_color_calibration
+=======
+            from process_images_cube import load_color_calibration
+>>>>>>> screen-gui
 
             stats = get_calibration_stats()
             roi_data = load_calibration()
@@ -304,7 +354,11 @@ class RubiksOperations:
             Dict avec success, data (dict des couleurs), error
         """
         try:
+<<<<<<< HEAD
             from calibration_colors  import load_color_calibration
+=======
+            from process_images_cube import load_color_calibration
+>>>>>>> screen-gui
             color_data = load_color_calibration()
             
             if color_data is None:
@@ -339,7 +393,11 @@ class RubiksOperations:
         """
         try:
             from calibration_rubiks import load_calibration
+<<<<<<< HEAD
             from calibration_colors import load_color_calibration
+=======
+            from process_images_cube import load_color_calibration
+>>>>>>> screen-gui
             from processing_rubiks import production_mode
 
             # Vérification des calibrations
@@ -443,8 +501,13 @@ class RubiksOperations:
             Dict avec success, data (analyse de la face), error
         """
         try:
+<<<<<<< HEAD
             from calibration_rubiks import load_calibration, load_color_calibration
             from process_images_cube import test_single_face_debug
+=======
+            from calibration_rubiks import load_calibration
+            from process_images_cube import load_color_calibration, test_single_face_debug
+>>>>>>> screen-gui
 
             face = face.upper()
             if face not in ['F', 'R', 'B', 'L', 'U', 'D']:
@@ -599,7 +662,11 @@ class RubiksOperations:
     # MODE ROBOT
     # ========================================================================
 
+<<<<<<< HEAD
     def run_robot_mode(self, do_solve: bool = True, do_execute: bool = False,
+=======
+    def run_robot_mode(self, do_solve: bool = True, do_execute: bool = True,
+>>>>>>> screen-gui
                        debug: str = "text") -> Dict:
         """
         Exécute le pipeline complet en mode robot.
@@ -614,6 +681,7 @@ class RubiksOperations:
         """
         try:
             from robot_solver import RobotCubeSolver
+<<<<<<< HEAD
             from progress_listeners import console_clean_listener, jsonl_file_listener, multi_listener
             from tft_driver import ConsoleTFTFile
             from tft_listener import make_tft_listener
@@ -628,16 +696,29 @@ class RubiksOperations:
                 cubestring, solution = result
             else:
                 cubestring, solution = result, ""
+=======
+            
+            solver = RobotCubeSolver(image_folder=self.tmp_folder, debug=debug)
+            cubestring = solver.run(do_solve=do_solve, do_execute=do_execute)
+            
+>>>>>>> screen-gui
             return OperationResult(
                 success=True,
                 data={
                     "cubestring": cubestring,
+<<<<<<< HEAD
                     "solution": solution,
                     "log_jsonl": getattr(file_listener, "path", None),  # chemin du fichier jsonl
                     "solved": do_solve,
                     "executed": do_execute
                 },
                 message="Pipeline robot terminé"
+=======
+                    "solved": do_solve,
+                    "executed": do_execute
+                },
+                message="Pipeline robot terminé avec succès"
+>>>>>>> screen-gui
             ).to_dict()
 
         except Exception as e:
@@ -650,6 +731,7 @@ class RubiksOperations:
     # CAPTURE D'IMAGES
     # ========================================================================
 
+<<<<<<< HEAD
     def capture_images_robot(self, rotation: int = 0, folder: str = "", debug: str = "text") -> Dict:
         try:
             from robot_solver import RobotCubeSolver
@@ -713,6 +795,8 @@ class RubiksOperations:
             return OperationResult(success=False, error=f"Erreur en mode robot + photos: {str(e)}").to_dict()
 
 
+=======
+>>>>>>> screen-gui
     def capture_images(self, rotation: int = 0, folder: str = "captures") -> Dict:
         """
         Capture des images depuis la caméra.
@@ -725,10 +809,16 @@ class RubiksOperations:
             Dict avec success, data (liste des fichiers), error
         """
         try:
+<<<<<<< HEAD
             from capture_photo_from_311 import CameraInterface2
             camera = CameraInterface2()
             
             output = camera.capture_loop(rotation=rotation, folder=folder)
+=======
+            from capture_photo_from_311 import capture_loop
+            
+            output = capture_loop(rotation=rotation, folder=folder)
+>>>>>>> screen-gui
             
             if output:
                 return OperationResult(
@@ -779,6 +869,7 @@ class RubiksOperations:
                 error=f"Erreur lors de la capture: {str(e)}"
             ).to_dict()
 
+<<<<<<< HEAD
     # ========================================================================
     # Calibration des blancs
     # ========================================================================
@@ -798,6 +889,9 @@ class RubiksOperations:
                 success=False,
                 error=f"Erreur calibration blancs: {str(e)}"
             ).to_dict()
+=======
+
+>>>>>>> screen-gui
     # ========================================================================
     # TESTS GPIO (ANNEAU LUMINEUX, MOTEUR, ETC.)
     # ========================================================================
@@ -864,6 +958,7 @@ class RubiksOperations:
                 error=f"Erreur lors du test de l’anneau lumineux: {str(e)}"
             ).to_dict()
 
+<<<<<<< HEAD
     def test_tft(self, duration: int) -> Dict:
         """
         Lance l'affichage du GIF sur le TFT pendant X secondes.
@@ -939,6 +1034,8 @@ class RubiksOperations:
                 success=False,
                 error=f"Erreur lors du test moteur: {str(e)}"
             ).to_dict()            
+=======
+>>>>>>> screen-gui
 
     # ========================================================================
     # UTILITAIRES

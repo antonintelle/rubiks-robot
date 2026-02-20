@@ -1,4 +1,5 @@
 #!/bin/bash
+<<<<<<< HEAD
 # ============================================================================
 #  main_text_gui.sh  (alias: 1_text_gui.sh)
 #  ---------------------------------------
@@ -43,16 +44,39 @@ VENV_PY="$VENV_DIR/bin/python3"
 if [ ! -x "$VENV_PY" ]; then
     echo "❌ Python du venv introuvable/exécutable : $VENV_PY"
     echo "👉 Vérifie ton venv : $VENV_DIR"
+=======
+# ============================================================
+#  main_text_gui.sh
+#  Lance l’interface texte (mode terminal) du solveur Rubik's Cube
+#  Compatible Raspberry Pi OS + environnement rubik-env
+# ============================================================
+
+echo "🚀 Lancement de l’interface texte du solveur Rubik's Cube..."
+
+# --- Activation de l'environnement virtuel ---
+if [ -d "$HOME/rubik-env" ]; then
+    source "$HOME/rubik-env/bin/activate"
+else
+    echo "❌ Environnement virtuel non trouvé : ~/rubik-env"
+    echo "👉 Exécute d'abord : ./0_install_pipeline_v4.sh"
+>>>>>>> screen-gui
     exit 1
 fi
 
 # --- Navigation vers le dossier du projet ---
+<<<<<<< HEAD
 cd "$PROJECT_DIR" || {
     echo "❌ Projet introuvable : $PROJECT_DIR"
+=======
+cd "$HOME/rubik/pipeline-complet-rubik" || {
+    echo "❌ Projet introuvable : ~/rubik/pipeline-complet-rubik"
+    deactivate
+>>>>>>> screen-gui
     exit 1
 }
 
 # --- Vérification du script principal ---
+<<<<<<< HEAD
 if [ ! -f "$SCRIPT" ]; then
     echo "❌ Fichier $SCRIPT introuvable dans le projet."
     exit 1
@@ -62,4 +86,18 @@ fi
 echo "🖥️  Démarrage de $SCRIPT (avec sudo, python du venv)..."
 sudo -E "$VENV_PY" "$SCRIPT"
 
+=======
+if [ ! -f "text_gui.py" ]; then
+    echo "❌ Fichier text_gui.py introuvable dans le projet."
+    deactivate
+    exit 1
+fi
+
+# --- Lancement du GUI texte ---
+echo "🖥️  Démarrage de text_gui.py..."
+python3 text_gui.py
+
+# --- Désactivation du venv ---
+deactivate
+>>>>>>> screen-gui
 echo "✅ Fin du programme (interface texte)."

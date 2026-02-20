@@ -1,8 +1,12 @@
+<<<<<<< HEAD
 #!/usr/bin/env python3
+=======
+>>>>>>> screen-gui
 # ============================================================================
 #  calibration_colors.py
 #  ---------------------
 #  Objectif :
+<<<<<<< HEAD
 #     Centraliser toute la logique de **mesure**, **calibration**, et
 #     **classification** des couleurs des stickers du Rubik’s Cube.
 #     Le fichier fournit :
@@ -231,11 +235,33 @@ def quad_to_np(roi_quad) -> np.ndarray:
     """Convertit une ROI quad en np.array float32 shape (4,2)."""
     roi_quad = _as_list(roi_quad)
     return np.array([[float(px), float(py)] for (px, py) in roi_quad], dtype=np.float32)
+=======
+#     Regrouper TOUT ce qui concerne la **calibration et classification des couleurs**.
+#
+#  Fonctions principales :
+#     - load_color_calibration(filename='rubiks_color_calibration.json')
+#     - save_color_calibration(color_calibration, filename='rubiks_color_calibration.json')
+#     - analyze_colors(cells) / analyze_colors_with_calibration(cells, calib)
+#     - calibrate_colors_interactive()  ← utilise la ROI existante + clic utilisateur
+#     - FaceSelector / display_and_select_cell : interface de sélection
+#
+#  Remarques :
+#     - Pour éviter les imports circulaires, on importe localement
+#       process_face_with_roi (depuis process_images_cube) au moment d'usage.
+# ============================================================================
+
+from __future__ import annotations
+import os, json
+from typing import Dict, Tuple, Optional, List
+import numpy as np
+import cv2
+>>>>>>> screen-gui
 
 # ---------------------------
 # Chargement / Sauvegarde RGB
 # ---------------------------
 
+<<<<<<< HEAD
 def load_color_calibration(path="rubiks_color_calibration.json"):
     """
     Charge la calibration couleurs (centres RGB + tol) depuis le JSON.
@@ -255,6 +281,24 @@ def load_color_calibration(path="rubiks_color_calibration.json"):
     return calib
 
 
+=======
+def load_color_calibration(filename: str = "rubiks_color_calibration.json") -> Optional[Dict[str, Tuple[float,float,float,float]]]:
+    if not os.path.exists(filename):
+        return None
+    try:
+        with open(filename, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        color_data = data.get("color_data", data)  # compat ancien format
+        calib = {}
+        for name, arr in color_data.items():
+            r, g, b, tol = arr
+            calib[name] = (float(r), float(g), float(b), float(tol))
+        print(f"Calibration couleurs chargée: {list(calib.keys())}")
+        return calib
+    except Exception as e:
+        print(f"Erreur lors du chargement des couleurs: {e}")
+        return None
+>>>>>>> screen-gui
 
 
 def save_color_calibration(color_calibration: Dict[str, Tuple[float,float,float,float]],
@@ -294,6 +338,7 @@ def _avg_center_rgb(cell_roi) -> Tuple[float,float,float]:
     b, g, r = mean_bgr
     return float(r), float(g), float(b)
 
+<<<<<<< HEAD
 def _avg_center_rgb_from_bgr_roi(roi_bgr: np.ndarray, frac: float = 0.35):
     """
     ROI OpenCV = BGR.
@@ -308,6 +353,8 @@ def _avg_center_rgb_from_bgr_roi(roi_bgr: np.ndarray, frac: float = 0.35):
     b, g, r = patch.reshape(-1, 3).mean(axis=0)
     return float(r), float(g), float(b)
 
+=======
+>>>>>>> screen-gui
 
 def classify_color_default(r: float, g: float, b: float) -> str:
     # Utilise HSV pour une classification robuste
@@ -324,6 +371,7 @@ def classify_color_default(r: float, g: float, b: float) -> str:
     return f"hsv({int(h)},{int(s)},{int(v)})"
 
 
+<<<<<<< HEAD
 def classify_with_calibration(
     r: float, g: float, b: float,
     color_calibration,
@@ -457,13 +505,40 @@ def analyze_colors_with_calibration(
         if debug:
             print(f"[CALIB] cell {idx+1} ({i},{j}) RGB=({r:.0f},{g:.0f},{b:.0f}) -> {col}")
 
+=======
+def classify_with_calibration(r: float, g: float, b: float,
+                              color_calibration: Dict[str, Tuple[float,float,float,float]]) -> str:
+    best = "unknown"
+    min_d = float("inf")
+    for name, (rr,gg,bb,tol) in color_calibration.items():
+        d = ((r-rr)**2 + (g-gg)**2 + (b-bb)**2) ** 0.5
+        if d < tol and d < min_d:
+            min_d, best = d, name
+    return best if best != "unknown" else f"rgb({r:.0f},{g:.0f},{b:.0f})"
+
+
+def analyze_colors_with_calibration(cells, color_calibration: Optional[Dict[str, Tuple[float,float,float,float]]] = None) -> List[str]:
+    out = []
+    for (_ij), roi in [(ij, roi) for (ij, roi) in cells]:
+        if roi is None or getattr(roi, "size", 0) == 0:
+            out.append("unknown"); continue
+        r,g,b = _avg_center_rgb(roi)
+        if color_calibration:
+            out.append(classify_with_calibration(r,g,b,color_calibration))
+        else:
+            out.append(classify_color_default(r,g,b))
+>>>>>>> screen-gui
     return out
 
 
 def analyze_colors(cells) -> List[str]:
     calib = load_color_calibration()
+<<<<<<< HEAD
     return analyze_colors_with_calibration(cells, calib, debug=True)
 
+=======
+    return analyze_colors_with_calibration(cells, calib)
+>>>>>>> screen-gui
 
 # ---------------------------
 # UI de calibration par clic
@@ -490,6 +565,7 @@ class FaceSelector:
                     self.face_images[f] = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     def _cell_from_xy(self, face: str, x: float, y: float):
+<<<<<<< HEAD
         """Retourne l'index cellule 0..8 à partir d'un clic (x,y).
 
         Supporte :
@@ -535,6 +611,15 @@ class FaceSelector:
             return row * 3 + col
 
         return None
+=======
+        if face not in self.roi_data: return None
+        x1,y1,x2,y2 = self.roi_data[face]
+        if not (x1 <= x <= x2 and y1 <= y <= y2): return None
+        cw = (x2-x1)/3.0; ch = (y2-y1)/3.0
+        col = int((x-x1)/cw); row = int((y-y1)/ch)
+        col = max(0, min(2, col)); row = max(0, min(2, row))
+        return row*3 + col
+>>>>>>> screen-gui
 
     def _on_click(self, event):
         if event.inaxes is None: return
@@ -549,7 +634,11 @@ class FaceSelector:
 
     def show(self):
         import matplotlib.pyplot as plt
+<<<<<<< HEAD
         from matplotlib.patches import Rectangle, Polygon
+=======
+        from matplotlib.patches import Rectangle
+>>>>>>> screen-gui
 
         self._load_images()
         order = ["F","R","B","L","U","D"]
@@ -570,6 +659,7 @@ class FaceSelector:
             if face in self.face_images and face in self.roi_data:
                 img = self.face_images[face]
                 ax.imshow(img, aspect="equal")  # garde le bon ratio
+<<<<<<< HEAD
 
                 roi = self.roi_data[face]
                 print(f"DEBUG show face={face} roi={roi} type={type(roi)} "f"is_bbox={is_bbox_roi(roi)} is_quad={is_quad_roi(roi)}")
@@ -603,6 +693,17 @@ class FaceSelector:
                         p_right = tr + t * (br - tr)
                         ax.plot([p_left[0], p_right[0]], [p_left[1], p_right[1]],
                                 color="white", linewidth=1, alpha=0.7)
+=======
+                x1, y1, x2, y2 = self.roi_data[face]
+
+                # Grille verte + lignes blanches
+                ax.add_patch(Rectangle((x1, y1), x2 - x1, y2 - y1,
+                                    linewidth=2, edgecolor="lime", facecolor="none"))
+                cw, ch = (x2 - x1) / 3.0, (y2 - y1) / 3.0
+                for i in range(1, 3):
+                    ax.axvline(x=x1 + i * cw, color="white", linewidth=1, alpha=0.7)
+                    ax.axhline(y=y1 + i * ch, color="white", linewidth=1, alpha=0.7)
+>>>>>>> screen-gui
 
                 ax.set_title(f"{face} ({face_names[face]})",
                             fontsize=9, fontweight="bold", pad=1)
@@ -659,9 +760,12 @@ def calibrate_colors_interactive(default_tolerance: float = None) -> Optional[Di
        Si default_tolerance est fourni, il est utilisé sans poser de question.
     """
     from calibration_roi import load_calibration  # import tardif pour éviter cycles
+<<<<<<< HEAD
     import traceback
     print("DEBUG: calibration_colors.py =", __file__)
 
+=======
+>>>>>>> screen-gui
     roi_data = load_calibration()
     if roi_data is None:
         print("Aucune calibration ROI trouvée. Calibrez d'abord les positions.")
@@ -670,12 +774,16 @@ def calibrate_colors_interactive(default_tolerance: float = None) -> Optional[Di
     calib: Dict[str, Tuple[float,float,float,float]] = {}
     for color_name in ["red","orange","yellow","green","blue","white"]:
         print(f"\n=== Calibration couleur: {color_name.upper()} ===")
+<<<<<<< HEAD
         try:
             face, cell_idx = display_and_select_cell(roi_data, color_name)
         except Exception:
             print("DEBUG: exception dans display_and_select_cell()")
             traceback.print_exc()
             raise
+=======
+        face, cell_idx = display_and_select_cell(roi_data, color_name)
+>>>>>>> screen-gui
         if face is None or cell_idx is None:
             print(f"Couleur {color_name} ignorée"); continue
 
@@ -707,6 +815,7 @@ def calibrate_colors_interactive(default_tolerance: float = None) -> Optional[Di
         print(f"Couleurs calibrées: {list(calib.keys())}")
     return calib if calib else None
 
+<<<<<<< HEAD
 # ============================================================================
 # Cubotino-like
 # ============================================================================
@@ -1224,6 +1333,8 @@ def classify_color_cubotino_like_legacy1(
 
     return "unknown"
 
+=======
+>>>>>>> screen-gui
 
 # ============================================================================
 # POINT D’ENTRÉE DIRECT

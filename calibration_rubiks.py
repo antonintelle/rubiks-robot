@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 #!/usr/bin/env python3
+=======
+
+>>>>>>> screen-gui
 # ============================================================================
 #  calibration_rubiks.py
 #  ---------------------
 #  Objectif :
+<<<<<<< HEAD
 #     Fournir un **point d’entrée unifié** (“fichier pont”) pour la calibration
 #     du projet Rubik’s Cube :
 #       - Calibration ROI (zones des faces dans les images)
@@ -54,6 +59,22 @@
 # ============================================================================
 
 
+=======
+#     Fichier **pont enrichi** pour la calibration du projet Rubik’s Cube.
+#     - Interface unifiée pour la calibration ROI et Couleurs
+#     - Fournit des statistiques et un affichage complet de la calibration actuelle
+#     - Corrige la clé 'faces_count' (anciennement 'faces count')
+#
+#  Fonctions principales :
+#     - get_calibration_stats()     → résumé des calibrations
+#     - calibration_mode()          → menu interactif global
+#
+#  Sous-modules utilisés :
+#     * calibration_roi.py      → calibration ROI (zones des faces)
+#     * calibration_colors.py   → calibration des couleurs
+# ============================================================================
+
+>>>>>>> screen-gui
 from __future__ import annotations
 from typing import Dict, Any, Optional
 import numpy as np
@@ -101,6 +122,7 @@ def get_calibration_stats() -> Optional[Dict[str, Any]]:
     if roi is not None:
         faces = list(roi.keys())
         widths, heights = [], []
+<<<<<<< HEAD
 
         for f, v in roi.items():
             # v peut être bbox (x1,y1,x2,y2) ou quad ((x,y)*4)
@@ -127,6 +149,11 @@ def get_calibration_stats() -> Optional[Dict[str, Any]]:
                 # format inconnu → on ignore juste pour les stats
                 continue
 
+=======
+        for f, (x1, y1, x2, y2) in roi.items():
+            widths.append(x2 - x1)
+            heights.append(y2 - y1)
+>>>>>>> screen-gui
         stats["roi"] = {
             "faces": faces,
             "faces_count": len(faces),  # ✅ clé corrigée

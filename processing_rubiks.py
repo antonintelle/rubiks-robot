@@ -1,8 +1,17 @@
+<<<<<<< HEAD
 #!/usr/bin/env python3
+=======
+# processing_rubiks.py
+# Corps princpal permettant d'encoder l'état principal du cube pour que il soit
+# interpretable par le solveur kociemba convert_to_kociemba
+# il prend en entrée un cube encodé FacesDict
+# il contien aussi des fonctions de debug
+>>>>>>> screen-gui
 # ============================================================================
 #  processing_rubiks.py
 #  --------------------
 #  Objectif :
+<<<<<<< HEAD
 #     Module central de **post-traitement Rubik’s** : transformer les résultats de
 #     vision (FacesDict : 6 faces × 9 couleurs) en une chaîne **Singmaster/Kociemba**
 #     standard (54 caractères, ordre URFDLB) utilisable par un solveur (Kociemba).
@@ -73,18 +82,101 @@
 #  Sorties :
 #     - Chaîne “Singmaster/Kociemba” 54 caractères (URFDLB)
 #     - (Option) Fichier rubiks_singmaster.txt (+ JSON metadata si activé)
+=======
+#     Module central pour transformer les résultats de vision (FacesDict)
+#     en un encodage standard Singmaster (chaîne 54 URFDLB) utilisable
+#     par le solveur de type Kociemba.
+#
+#  Étapes principales :
+#     1) Correction orientation robot :
+#        - apply_robot_orientation_corrections
+#        - rotate_face_grid / rotate_cells_grid
+#     2) Réorientation standard Kociemba :
+#        - reorient_cube_for_kociemba
+#     3) Encodage des faces :
+#        - create_color_mapping : centre → lettre
+#        - encode_with_mapping  : couleurs → URFDLB
+#        - validate_cube_string : validation basique
+#        - opposite_edges / edge_pairs_multiset : diagnostics avancés
+#     4) Conversion finale :
+#        - convert_to_kociemba : FacesDict → chaîne 54
+#     5) Orchestration :
+#        - production_mode : Vision + Encodage + Sauvegarde
+#        - process_rubiks_to_singmaster : API principale
+#
+#  Fonctions utilitaires :
+#     - save_singmaster_file : sauvegarde txt/json
+#     - _normalize_cube / _split_full_urfdlb : formats intermédiaires
+#
+#  Fonctions debug & test :
+#     - quick_pipeline_test_corrected : test pipeline complet + solveur
+#     - debug_color_mapping : diagnostic mapping couleur → lettre
+#     - debug_vision_step1  : vérification vision (54 stickers, 6×9)
+#     - debug_rotation_step2: vérification rotations
+#     - print_face_grids    : affichage grilles 3×3
+#     - full_debug_pipeline : vision + rotation + comparaison cube réel
+#     - debug_compare_with_physical_cube : guide de validation manuelle
+#
+#  Entrées :
+#     - FacesDict issu de process_images_cube.detect_colors_for_faces
+#     - Calibration ROI (rubiks_calibration.json)
+#     - Calibration couleurs (rubiks_color_calibration.json)
+#
+#  Sorties :
+#     - Chaîne Singmaster 54 caractères (URFDLB)
+#     - Fichiers txt/json avec métadonnées
+#
+# ============================================================================
+# ============================================================================
+#  Pipeline visuel (schéma simplifié)
+#
+#         Images (6 faces, F/R/B/L/U/D)
+#                       │
+#                       ▼
+#        detect_colors_for_faces (vision)
+#              → FacesDict (couleurs 3×3)
+#                       │
+#                       ▼
+#      apply_robot_orientation_corrections
+#        (rotation selon mode robot/phone)
+#                       │
+#                       ▼
+#          reorient_cube_for_kociemba
+#       (réordonne les faces pour Kociemba)
+#                       │
+#                       ▼
+#           encode_with_mapping
+#      (mapping couleur → URFDLB, 54 chars)
+#                       │
+#                       ▼
+#           validate_cube_string
+#       + opposite_edges / edge_pairs_multiset
+#         (diagnostic de cohérence)
+#                       │
+#                       ▼
+#         convert_to_kociemba (final)
+#          → Chaîne Singmaster 54
+#                       │
+#                       ▼
+#       save_singmaster_file (txt/json)
+>>>>>>> screen-gui
 # ============================================================================
 
 import os, json, datetime as dt
 from typing import Dict, Tuple, List, Optional, Any
 from collections import Counter
 from calibration_rubiks import load_calibration
+<<<<<<< HEAD
 #from calibration_colors import load_color_calibration
 from process_images_cube import detect_colors_for_faces
+=======
+from process_images_cube import detect_colors_for_faces, load_color_calibration
+>>>>>>> screen-gui
 from types_shared import FaceResult, FacesDict
 
 from solver_wrapper import solve_cube
 
+<<<<<<< HEAD
 def apply_robot_orientation_corrections(robot_results: FacesDict, mode: str = "robot_cam") -> FacesDict:
     """Applique les rotations selon le profil robot"""
     tables = {
@@ -94,6 +186,15 @@ def apply_robot_orientation_corrections(robot_results: FacesDict, mode: str = "r
         "phone_demo":{"F": 0, "R": 90,"B": 180, "L": 270, "U": 0, "D": 0},
     }
 
+=======
+def apply_robot_orientation_corrections(robot_results: FacesDict, mode: str = "robot_raw") -> FacesDict:
+    """Applique les rotations selon le profil robot"""
+    tables = {
+        "robot_raw": {"F": 0, "R": 0, "B": 0, "L": 0, "U": 0, "D": 0},
+        "prealigned": {"F": 0, "R": 0, "B": 0, "L": 0, "U": 0, "D": 0},
+        "phone_demo": {"F": 0, "R": 90, "B": 180, "L": 270, "U": 0, "D": 0},
+    }
+>>>>>>> screen-gui
     rotations = tables.get(mode, tables["robot_raw"])
 
     out: FacesDict = {}
@@ -161,7 +262,11 @@ def rotate_cells_grid(cells, rotation):
     return rotated
 
 
+<<<<<<< HEAD
 def reorient_cube_for_kociemba_legacy(corrected_results: FacesDict) -> FacesDict:
+=======
+def reorient_cube_for_kociemba(corrected_results: FacesDict) -> FacesDict:
+>>>>>>> screen-gui
     """
     Réorientation pour Kociemba - Rotation 270° (LA SEULE QUI FONCTIONNE)
     """
@@ -176,6 +281,7 @@ def reorient_cube_for_kociemba_legacy(corrected_results: FacesDict) -> FacesDict
     
     return reoriented
 
+<<<<<<< HEAD
 def reorient_cube_for_kociemba(corrected: FacesDict, yaw: int = 0) -> FacesDict:
     """
     yaw = rotation globale autour de l’axe vertical (U/D), en degrés.
@@ -196,6 +302,8 @@ def reorient_cube_for_kociemba(corrected: FacesDict, yaw: int = 0) -> FacesDict:
             out[dst_face] = corrected[src_face]
     return out
 
+=======
+>>>>>>> screen-gui
 
 def create_color_mapping(face_results: FacesDict) -> Dict[str, str]:
     """Crée le mapping couleur→lettre dynamique basé sur les centres"""
@@ -319,7 +427,11 @@ def edge_pairs_multiset(s: str):
     return pairs, missing, duplicates
 
 
+<<<<<<< HEAD
 def convert_to_kociemba_legacy(color_results: FacesDict,
+=======
+def convert_to_kociemba(color_results: FacesDict,
+>>>>>>> screen-gui
                        mode: str = "robot_raw",
                        strategy: str = "center_hsv",
                        debug: str = "text") -> Tuple[bool, Optional[str], Optional[str]]:
@@ -359,6 +471,7 @@ def convert_to_kociemba_legacy(color_results: FacesDict,
     except Exception as e:
         return False, None, f"Erreur encodage: {e}"
 
+<<<<<<< HEAD
 def convert_to_kociemba(color_results, mode="robot_cam", strategy=None, debug=False, yaw=0):
     return _convert_to_kociemba_new(color_results, rot_mode=mode, yaw=yaw, debug=debug)
 
@@ -378,12 +491,18 @@ def _convert_to_kociemba_new(color_results: FacesDict,
     except Exception as e:
         return False, None, f"Erreur encodage: {e}"
 
+=======
+>>>>>>> screen-gui
 
 def production_mode(
     roi_data: Optional[Dict[str, Tuple[int, int, int, int]]],
     color_calibration: Optional[Dict[str, Any]] = None,
     image_folder: str = "tmp",
+<<<<<<< HEAD
     mode: str = "robot_cam",
+=======
+    mode: str = "robot_raw",
+>>>>>>> screen-gui
     strategy: str = "center_hsv",
     debug: str = "text",
     save: bool = True,
@@ -397,9 +516,14 @@ def production_mode(
         if roi_data is None:
             return {"success": False, "singmaster": None, "error": "Calibration ROI introuvable"}
 
+<<<<<<< HEAD
     #if color_calibration is None:
     #    color_calibration = load_color_calibration()
     color_calibration = None
+=======
+    if color_calibration is None:
+        color_calibration = load_color_calibration()
+>>>>>>> screen-gui
 
     # Phase vision
     color_results: FacesDict = detect_colors_for_faces(
@@ -448,7 +572,11 @@ def process_rubiks_to_singmaster(
     image_folder: str = "tmp",
     calibration_file: Optional[str] = None,
     debug: str = "text",
+<<<<<<< HEAD
     mode: str = "robot_cam",
+=======
+    mode: str = "robot_raw",
+>>>>>>> screen-gui
     strategy: str = "center_hsv",
     save: bool = True,
     return_faces: bool = False,
@@ -460,8 +588,12 @@ def process_rubiks_to_singmaster(
     if roi_data is None:
         return {"success": False, "singmaster": None, "error": "Calibration ROI non trouvée"}
 
+<<<<<<< HEAD
     #color_calibration = load_color_calibration()
     color_calibration = None
+=======
+    color_calibration = load_color_calibration()
+>>>>>>> screen-gui
 
     required = ["F.jpg", "R.jpg", "B.jpg", "L.jpg", "U.jpg", "D.jpg"]
     missing = [fn for fn in required if not os.path.exists(os.path.join(image_folder, fn))]
@@ -576,11 +708,18 @@ def save_singmaster_file(singmaster_cube,
 
 
 # Fonctions pour tests et diagnostics
+<<<<<<< HEAD
 def quick_pipeline_test_corrected(folder="tmp", debug="text", mode="robot_cam"):
     """Test rapide du pipeline complet"""
     roi = load_calibration()
     #color_calib = load_color_calibration()
     color_calib = None
+=======
+def quick_pipeline_test_corrected(folder="tmp", debug="text", mode="robot_raw"):
+    """Test rapide du pipeline complet"""
+    roi = load_calibration()
+    color_calib = load_color_calibration()
+>>>>>>> screen-gui
 
     faces = detect_colors_for_faces(folder, roi, color_calib, debug=debug)
     if len(faces) < 6:
@@ -607,10 +746,16 @@ def quick_pipeline_test_corrected(folder="tmp", debug="text", mode="robot_cam"):
 def debug_color_mapping(folder="tmp"):
     """Diagnostique le mapping couleur détectée → lettre"""
     roi = load_calibration()
+<<<<<<< HEAD
     #color_calib = load_color_calibration()
     color_calib = None
     faces = detect_colors_for_faces(folder, roi, color_calib, debug="none")
     corrected = apply_robot_orientation_corrections(faces, mode="robot_cam")
+=======
+    color_calib = load_color_calibration()
+    faces = detect_colors_for_faces(folder, roi, color_calib, debug="none")
+    corrected = apply_robot_orientation_corrections(faces, mode="robot_raw")
+>>>>>>> screen-gui
     
     print("=== DIAGNOSTIC MAPPING COULEUR ===")
     color_mapping = create_color_mapping(corrected)
@@ -635,8 +780,12 @@ def debug_vision_step1(folder="tmp"):
     print("=== DEBUG ÉTAPE 1: VISION DES COULEURS ===")
     
     roi = load_calibration()
+<<<<<<< HEAD
     #color_calib = load_color_calibration()
     color_calib = None
+=======
+    color_calib = load_color_calibration()
+>>>>>>> screen-gui
     
     # Vision brute sans debug graphique
     faces = detect_colors_for_faces(folder, roi, color_calib, debug="none")
@@ -700,8 +849,12 @@ def debug_rotation_step2(faces):
     print_face_grids(faces, "AVANT")
     
     # Appliquer rotations
+<<<<<<< HEAD
     #corrected = apply_robot_orientation_corrections(faces, mode="robot_raw")
     corrected = apply_robot_orientation_corrections(faces, mode="robot_cam")
+=======
+    corrected = apply_robot_orientation_corrections(faces, mode="robot_raw")
+>>>>>>> screen-gui
     
     print("\nAPRÈS rotations:")
     print_face_grids(corrected, "APRÈS")

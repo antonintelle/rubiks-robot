@@ -1,8 +1,18 @@
+<<<<<<< HEAD
 #!/usr/bin/env python3
+=======
+# process_images_cube.py - Version améliorée
+# RESUME : Prcoessus de reconnsainces des images et encode du cube dans un format FacesDict
+# FacesDict permet d'encoder le cube en colueurs (c'est un tableau 3x3 dans ce cas)
+# Le point d'entrée principal est detect_colors_for_faces qui est la fonction 
+# detect_colors_for_faces
+#
+>>>>>>> screen-gui
 # ============================================================================
 #  process_images_cube.py
 #  ----------------------
 #  Objectif :
+<<<<<<< HEAD
 #     Pipeline de **reconnaissance visuelle** d’un Rubik’s Cube à partir d’images
 #     (faces photographiées). Le module :
 #       - extrait la face du cube (via ROI calibrée ou détection auto),
@@ -87,12 +97,53 @@
 #     - Dossier debug : tmp/ (intermédiaires + cellules + grilles colorées)
 # ============================================================================
 
+=======
+#     Pipeline de reconnaissance visuelle d’un Rubik’s Cube à partir d’images.
+#     Le code détecte les faces, extrait les 9 cases (3x3), identifie les couleurs,
+#     et encode le résultat sous forme de dictionnaire FacesDict.
+#
+#  Entrée principale :
+#     - detect_colors_for_faces(image_folder, roi_data, color_calibration=None, debug="text")
+#       -> Retourne un FacesDict avec les 6 faces reconnues.
+#
+#  Étapes principales du pipeline :
+#     1) Prétraitement image :
+#        - prepare_image : conversion N&B, flou, CLAHE
+#        - detect_edges : contours Canny + masque
+#     2) Détection cube :
+#        - detect_lines / classify_lines / select_main_lines : détection des lignes
+#        - detect_cube_boundary / detect_cube_simple : alternatives par contour
+#        - build_quad / validate_quad / warp_face : construction & normalisation d’un carré
+#     3) Extraction grille :
+#        - extract_grid : découpe en 9 cellules (3x3)
+#     4) Analyse des couleurs :
+#        - analyze_colors / analyze_colors_with_calibration : classification par défaut ou calibrée
+#        - visualize_color_grid : affichage et sauvegarde de la grille colorée
+#
+#  Fonctions de support :
+#     - process_one_face / process_one_face_debug : pipeline complet pour une face
+#     - process_face_with_roi : traitement direct d’une ROI calibrée
+#     - f : traitement batch d’une liste d’images avec stats
+#
+#  Calibration & debug :
+#     - test_single_face_debug : test complet avec affichage
+#     - calibrate_colors_interactive : calibration manuelle des couleurs
+#     - save_color_calibration / load_color_calibration : gestion calibration JSON
+#     - FaceSelector / display_and_select_cell : interface clic pour choisir une cellule
+#
+# ============================================================================
+
+
+
+
+>>>>>>> screen-gui
 import cv2
 import numpy as np
 import os
 import matplotlib.pyplot as plt
 from calibration_rubiks import load_calibration
 from types_shared import FaceResult, FacesDict
+<<<<<<< HEAD
 from matplotlib.patches import Rectangle, Polygon
 from collections import Counter
 import json
@@ -107,6 +158,8 @@ from calibration_colors import (
 
 import calibration_colors
 print("### calibration_colors imported from:", calibration_colors.__file__)
+=======
+>>>>>>> screen-gui
 
 # --- couleurs canoniques & normalisation ---
 CANON = {"red", "orange", "yellow", "green", "blue", "white"}
@@ -122,6 +175,7 @@ def _norm(c: str) -> str:
     if c.startswith("red"): return "red"
     return c  # ex: "rgb(...)" / "hsv(...)" si non classé
 
+<<<<<<< HEAD
 # ---------------------------
 # Helpers ROI (BBOX ou QUAD)
 # ---------------------------
@@ -239,6 +293,11 @@ def detect_colors_for_faces(image_folder, roi_data, color_calibration=None, debu
     return results
 
 def detect_colors_for_faces_legacy(image_folder, roi_data, color_calibration=None, debug="text") -> FacesDict:
+=======
+# FACADE du fichier detect_colors_for_faces renvoie un cube dont les oculeurs ont été identifiées
+
+def detect_colors_for_faces(image_folder, roi_data, color_calibration=None, debug="text") -> FacesDict:
+>>>>>>> screen-gui
     order = ["F","R","B","L","U","D"]
     results: FacesDict = {}
     for face in order:
@@ -257,10 +316,16 @@ def detect_colors_for_faces_legacy(image_folder, roi_data, color_calibration=Non
             continue
 
         # Utilise calibration si dispo
+<<<<<<< HEAD
         cols = analyze_colors_simple(cells, debug=(debug in ["text", "both"]))
         #cols = (analyze_colors_with_calibration(cells, color_calibration)
         #        if color_calibration is not None
         #        else analyze_colors(cells))
+=======
+        cols = (analyze_colors_with_calibration(cells, color_calibration)
+                if color_calibration is not None
+                else analyze_colors(cells))
+>>>>>>> screen-gui
 
         # --- AJOUT 1 : vérifier l'ordre row-major des (i,j) ---
         expected_ij = [(i, j) for i in range(3) for j in range(3)]
@@ -289,6 +354,11 @@ def detect_colors_for_faces_legacy(image_folder, roi_data, color_calibration=Non
 
     if debug in ["text","both"]:
         print(f"\nRÉSUMÉ PHASE VISION: {len(results)}/6 faces")
+<<<<<<< HEAD
+=======
+
+        from collections import Counter
+>>>>>>> screen-gui
         all_cols = [c for fr in results.values() for c in fr.colors]
         cnt = Counter(all_cols)
         print("Comptage couleurs (vision brute):", dict(cnt))
@@ -981,6 +1051,7 @@ def f(files, auto=True, settings=None, show=False):
     print(f"\n📊 Résumé: {success_count}/{len(files)} faces traitées avec succès")
     return results
 
+<<<<<<< HEAD
 def process_face_with_roi(image_path, roi_coords, face_name, show=False, save_intermediates=True):
     """Traite une face en utilisant une ROI calibrée.
 
@@ -988,10 +1059,16 @@ def process_face_with_roi(image_path, roi_coords, face_name, show=False, save_in
       - bbox: (x1,y1,x2,y2)
       - quad: ((xTL,yTL),(xTR,yTR),(xBR,yBR),(xBL,yBL))
     """
+=======
+
+def process_face_with_roi(image_path, roi_coords, face_name, show=False, save_intermediates=True):
+    """Traite une face en utilisant la ROI calibrée"""
+>>>>>>> screen-gui
     image = cv2.imread(image_path)
     if image is None:
         print(f"Erreur: impossible de charger {image_path}")
         return None, None
+<<<<<<< HEAD
 
     h, w = image.shape[:2]
 
@@ -1028,11 +1105,50 @@ def process_face_with_roi(image_path, roi_coords, face_name, show=False, save_in
         grid_dbg, cells = extract_grid(warped, save_prefix=f"tmp/calibrated_{face_name}")
 
         if save_intermediates:
+=======
+    
+    x1, y1, x2, y2 = roi_coords
+    
+    # Vérifier que la ROI est dans les limites de l'image
+    h, w = image.shape[:2]
+    if x2 > w or y2 > h or x1 < 0 or y1 < 0:
+        print(f"Attention: ROI hors limites pour {face_name}: ({x1}, {y1}) -> ({x2}, {y2}) pour image {w}x{h}")
+        # Ajuster les coordonnées
+        x1, y1 = max(0, x1), max(0, y1)
+        x2, y2 = min(w, x2), min(h, y2)
+        print(f"ROI ajustée: ({x1}, {y1}) -> ({x2}, {y2})")
+    
+    # Créer une image avec la ROI marquée
+    image_with_roi = image.copy()
+    cv2.rectangle(image_with_roi, (x1, y1), (x2, y2), (0, 0, 255), 3)
+    cv2.putText(image_with_roi, f'ROI {face_name}', (x1, y1-10), 
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    
+    # Extraire la ROI
+    cube_roi = image[y1:y2, x1:x2]
+    
+    if cube_roi.size == 0:
+        print(f"Erreur: ROI vide pour {face_name}")
+        return None, None
+    
+    print(f"Face {face_name}: ROI extraite ({x2-x1}x{y2-y1} pixels)")
+    
+    # Redimensionner à 300x300 pour standardiser
+    warped = cv2.resize(cube_roi, (300, 300))
+    
+    # Extraire la grille 3x3
+    grid_dbg, cells = extract_grid(warped, save_prefix=f"tmp/calibrated_{face_name}")
+    
+    # Sauvegarder les images intermédiaires
+    if save_intermediates:
+        try:
+>>>>>>> screen-gui
             cv2.imwrite(f"tmp/{face_name}_1_original_with_roi.jpg", image_with_roi)
             cv2.imwrite(f"tmp/{face_name}_2_roi_extracted.jpg", cube_roi)
             cv2.imwrite(f"tmp/{face_name}_3_warped_300x300.jpg", warped)
             if grid_dbg is not None:
                 cv2.imwrite(f"tmp/{face_name}_4_grid_3x3.jpg", grid_dbg)
+<<<<<<< HEAD
 
     # --- QUAD mode (redressement) ---
     elif is_quad(roi_coords):
@@ -1089,6 +1205,145 @@ def process_face_with_roi(image_path, roi_coords, face_name, show=False, save_in
 
     return warped, cells
 
+=======
+            print(f"Images intermédiaires sauvegardées pour {face_name}")
+        except Exception as e:
+            print(f"Erreur lors de la sauvegarde des images intermédiaires: {e}")
+    
+    if show:
+        plt.figure(figsize=(15, 5))
+        
+        plt.subplot(1, 4, 1)
+        plt.imshow(cv2.cvtColor(image_with_roi, cv2.COLOR_BGR2RGB))
+        plt.title(f"{face_name} - Image avec ROI")
+        plt.axis('off')
+        
+        plt.subplot(1, 4, 2)
+        plt.imshow(cv2.cvtColor(cube_roi, cv2.COLOR_BGR2RGB))
+        plt.title(f"{face_name} - ROI extraite")
+        plt.axis('off')
+        
+        plt.subplot(1, 4, 3)
+        plt.imshow(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
+        plt.title(f"{face_name} - Face 300x300")
+        plt.axis('off')
+        
+        plt.subplot(1, 4, 4)
+        plt.imshow(cv2.cvtColor(grid_dbg, cv2.COLOR_BGR2RGB))
+        plt.title(f"{face_name} - Grille 3x3")
+        plt.axis('off')
+        
+        plt.tight_layout()
+        plt.show()
+    
+    return warped, cells
+
+# Fonctions liées à la calibration
+
+def load_color_calibration(filename="rubiks_color_calibration.json"):
+    """Charge la calibration des couleurs"""
+    if not os.path.exists(filename):
+        return None
+    
+    try:
+        import json
+        with open(filename, 'r') as f:
+            data = json.load(f)
+        
+        color_data = data.get("color_data", data)  # Support ancien format
+        
+        # Convertir en format interne
+        color_calibration = {}
+        for color_name, [r, g, b, tolerance] in color_data.items():
+            color_calibration[color_name] = (r, g, b, tolerance)
+        
+        print(f"Calibration couleurs chargée: {list(color_calibration.keys())}")
+        return color_calibration
+    
+    except Exception as e:
+        print(f"Erreur lors du chargement des couleurs: {e}")
+        return None
+
+def classify_color_default(r, g, b):
+    """Classification par défaut avec meilleure séparation jaune/orange"""
+    # Convertir en HSV pour une meilleure classification
+    rgb_normalized = np.array([[[r, g, b]]], dtype=np.uint8)
+    hsv = cv2.cvtColor(rgb_normalized, cv2.COLOR_RGB2HSV)[0, 0]
+    h, s, v = hsv
+    
+    # Classification basée sur HSV (plus robuste)
+    if s < 50 and v > 200:  # Faible saturation, haute luminosité
+        return "white"
+    elif s < 50 and v < 50:  # Faible saturation, faible luminosité  
+        return "black"
+    elif h < 10 or h > 170:  # Rouge
+        return "red"
+    elif 10 <= h < 25:  # Orange (plage plus étroite)
+        return "orange"
+    elif 25 <= h < 35:  # Jaune (plage plus étroite) 
+        return "yellow"
+    elif 35 <= h < 85:  # Vert
+        return "green"
+    elif 85 <= h < 125:  # Cyan/Bleu
+        return "blue"
+    elif 125 <= h < 170:  # Magenta
+        return "blue"  # Souvent perçu comme bleu sur un Rubik's
+    else:
+        return f"hsv({h},{s},{v})"
+
+def classify_with_calibration(r, g, b, color_calibration):
+    """Classification avec couleurs de référence calibrées"""
+    min_distance = float('inf')
+    best_color = "unknown"
+    
+    for color_name, (ref_r, ref_g, ref_b, tolerance) in color_calibration.items():
+        # Distance euclidienne dans l'espace RGB
+        distance = np.sqrt((r - ref_r)**2 + (g - ref_g)**2 + (b - ref_b)**2)
+        
+        if distance < tolerance and distance < min_distance:
+            min_distance = distance
+            best_color = color_name
+    
+    return best_color if best_color != "unknown" else f"rgb({r:.0f},{g:.0f},{b:.0f})"
+
+def analyze_colors_with_calibration(cells, color_calibration=None):
+    """Analyse les couleurs avec calibration optionnelle"""
+    colors = []
+    
+    for (_i, _j), cell_roi in cells:
+        if cell_roi.size == 0:
+            colors.append("unknown")
+            continue
+        
+        # Prendre la région centrale de la cellule (80% du centre)
+        h, w = cell_roi.shape[:2]
+        center_h, center_w = int(h * 0.1), int(w * 0.1)
+        center_roi = cell_roi[center_h:h-center_h, center_w:w-center_w]
+        
+        if center_roi.size == 0:
+            colors.append("unknown")
+            continue
+        
+        # Couleur moyenne en BGR puis RGB
+        mean_color = np.mean(center_roi, axis=(0, 1))
+        b, g, r = mean_color
+        
+        if color_calibration is not None:
+            # Utiliser la calibration pour classifier
+            color = classify_with_calibration(r, g, b, color_calibration)
+        else:
+            # Classification par défaut améliorée
+            color = classify_color_default(r, g, b)
+        
+        colors.append(color)
+    
+    return colors
+
+def analyze_colors(cells):
+    """Version de compatibilité qui charge automatiquement la calibration couleurs"""
+    color_calibration = load_color_calibration()
+    return analyze_colors_with_calibration(cells, color_calibration)
+>>>>>>> screen-gui
 
 def visualize_color_grid(colors, face_name, save_to_tmp=True):
     """Affiche une grille 3x3 colorée avec les vraies couleurs Rubik's"""
@@ -1183,6 +1438,7 @@ def visualize_color_grid(colors, face_name, save_to_tmp=True):
     return grid_img
 
 # Fonction de debug (pour le menu)
+<<<<<<< HEAD
 
 def test_single_face_debug(face_name, roi_coords, color_calibration=None):
     """Version debug complète avec visualisation des couleurs"""
@@ -1244,3 +1500,274 @@ def test_single_face_debug(face_name, roi_coords, color_calibration=None):
         "colors": colors,
         "roi": roi_coords
     }
+=======
+def test_single_face_debug(face_name, roi_coords, color_calibration=None):
+    """Version debug complète avec visualisation des couleurs"""
+    file_path = f"tmp/{face_name}.jpg"
+    
+    if not os.path.exists(file_path):
+        print(f"Fichier {file_path} non trouvé")
+        return None
+    
+    print(f"TEST DEBUG - Face {face_name} avec ROI {roi_coords}")
+    
+    warped, cells = process_face_with_roi(file_path, roi_coords, face_name, show=True)
+    
+    if warped is not None and cells is not None:
+        colors = analyze_colors_with_calibration(cells, color_calibration) \
+                if color_calibration is not None else analyze_colors(cells)
+        print(f"Face {face_name} testée avec succès")
+        print(f"Couleurs détectées: {colors}")
+        
+        # Afficher la grille colorée
+        visualize_color_grid(colors, face_name)
+        
+        # Afficher les valeurs RGB de chaque cellule
+        print("\nDétail des couleurs par cellule:")
+        for idx, ((i, j), cell_roi) in enumerate(cells):
+            if cell_roi.size > 0:
+                h, w = cell_roi.shape[:2]
+                center_h, center_w = int(h * 0.1), int(w * 0.1)
+                center_roi = cell_roi[center_h:h-center_h, center_w:w-center_w]
+                if center_roi.size > 0:
+                    mean_color = np.mean(center_roi, axis=(0, 1))
+                    b, g, r = mean_color
+                    print(f"  Cellule {idx+1} ({i},{j}): RGB({r:.0f},{g:.0f},{b:.0f}) -> {colors[idx]}")
+        
+        return {
+            "warped": warped,
+            "cells": cells,
+            "colors": colors,
+            "roi": roi_coords
+        }
+    else:
+        print(f"Échec du test de la face {face_name}")
+        return None
+
+def calibrate_colors_interactive():
+    """Mode interactif pour calibrer les couleurs avec interface cliquable"""
+    print("\nMODE CALIBRATION DES COULEURS")
+    print("Vous allez définir les couleurs de référence pour chaque couleur du Rubik's cube")
+    
+    # Charger la calibration ROI existante
+    roi_data = load_calibration()
+    if roi_data is None:
+        print("Aucune calibration ROI trouvée. Calibrez d'abord les positions.")
+        return None
+    
+    color_calibration = {}
+    rubiks_colors = ["red", "orange", "yellow", "green", "blue", "white"]
+    
+    for color_name in rubiks_colors:
+        print(f"\n=== Calibration couleur: {color_name.upper()} ===")
+        
+        # Afficher les faces et permettre la sélection par clic
+        selected_face, selected_cell = display_and_select_cell(roi_data, color_name)
+        
+        if selected_face is None or selected_cell is None:
+            print(f"Couleur {color_name} ignorée")
+            continue
+        
+        # Extraire la couleur de la cellule sélectionnée
+        file_path = f"tmp/{selected_face}.jpg"
+        warped, cells = process_face_with_roi(file_path, roi_data[selected_face], selected_face, show=False)
+        
+        if warped is not None and cells is not None and selected_cell < len(cells):
+            (_i, _j), cell_roi = cells[selected_cell]
+            
+            # Extraire la couleur moyenne
+            h, w = cell_roi.shape[:2]
+            center_h, center_w = int(h * 0.1), int(w * 0.1)
+            center_roi = cell_roi[center_h:h-center_h, center_w:w-center_w]
+            
+            if center_roi.size > 0:
+                mean_color = np.mean(center_roi, axis=(0, 1))
+                b, g, r = mean_color
+                
+                # Demander la tolérance
+                tolerance = input(f"Tolérance pour {color_name} (défaut: 50)? ").strip()
+                try:
+                    tolerance = float(tolerance) if tolerance else 50.0
+                except ValueError:
+                    tolerance = 50.0
+                
+                color_calibration[color_name] = (r, g, b, tolerance)
+                print(f"Couleur {color_name} calibrée: RGB({r:.0f},{g:.0f},{b:.0f}) ±{tolerance}")
+    
+    # Sauvegarder la calibration
+    if color_calibration:
+        save_color_calibration(color_calibration)
+        print(f"\nCalibration des couleurs sauvegardée")
+        print(f"Couleurs calibrées: {list(color_calibration.keys())}")
+    
+    return color_calibration
+
+
+class FaceSelector:
+    """Classe pour gérer la sélection interactive des cellules"""
+    
+    def __init__(self, roi_data, color_name):
+        self.roi_data = roi_data
+        self.color_name = color_name
+        self.selected_face = None
+        self.selected_cell = None
+        self.face_images = {}
+        self.face_positions = {}
+        
+    def load_face_images(self):
+        """Charge toutes les images des faces"""
+        faces_order = ["F", "R", "B", "L", "U", "D"]
+        
+        for face in faces_order:
+            file_path = f"tmp/{face}.jpg"
+            if os.path.exists(file_path) and face in self.roi_data:
+                image = cv2.imread(file_path)
+                if image is not None:
+                    # Convertir BGR vers RGB
+                    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    self.face_images[face] = image_rgb
+    
+    def on_click(self, event):
+        """Gestionnaire de clic sur l'image"""
+        if event.inaxes is None:
+            return
+        
+        # Identifier sur quelle face on a cliqué
+        for face, ax in self.face_positions.items():
+            if event.inaxes == ax:
+                # Calculer quelle cellule a été cliquée
+                x, y = event.xdata, event.ydata
+                cell = self.get_cell_from_coordinates(face, x, y)
+                
+                if cell is not None:
+                    self.selected_face = face
+                    self.selected_cell = cell
+                    print(f"\nSélectionné: Face {face}, Cellule {cell + 1}")
+                    
+                    # Fermer la fenêtre matplotlib
+                    plt.close('all')
+                break
+    
+    def get_cell_from_coordinates(self, face, x, y):
+        """Détermine quelle cellule (0-8) correspond aux coordonnées cliquées"""
+        if face not in self.roi_data:
+            return None
+        
+        x1, y1, x2, y2 = self.roi_data[face]
+        
+        # Vérifier si le clic est dans la ROI
+        if not (x1 <= x <= x2 and y1 <= y <= y2):
+            return None
+        
+        # Calculer la cellule (grille 3x3)
+        cell_width = (x2 - x1) / 3
+        cell_height = (y2 - y1) / 3
+        
+        col = int((x - x1) / cell_width)
+        row = int((y - y1) / cell_height)
+        
+        # S'assurer qu'on reste dans les limites
+        col = max(0, min(2, col))
+        row = max(0, min(2, row))
+        
+        return row * 3 + col
+    
+    def display_faces(self):
+        """Affiche les faces dans une grille cliquable"""
+        
+        fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+        fig.suptitle(f'Sélectionnez une cellule contenant du {self.color_name.upper()}', 
+                     fontsize=16, fontweight='bold')
+        
+        faces_order = ["F", "R", "B", "L", "U", "D"]
+        face_names = {
+            "F": "Front", "R": "Right", "B": "Back", 
+            "L": "Left", "U": "Up", "D": "Down"
+        }
+        
+        for idx, face in enumerate(faces_order):
+            row = idx // 3
+            col = idx % 3
+            ax = axes[row, col]
+            self.face_positions[face] = ax
+            
+            if face in self.face_images:
+                image = self.face_images[face]
+                ax.imshow(image)
+                
+                # Dessiner la ROI (rectangle vert semi-transparent)
+                x1, y1, x2, y2 = self.roi_data[face]
+                from matplotlib.patches import Rectangle
+                rect = Rectangle((x1, y1), x2-x1, y2-y1, 
+                               linewidth=3, edgecolor='lime', facecolor='none')
+                ax.add_patch(rect)
+                
+                # Dessiner la grille des cellules (lignes fines)
+                cell_width = (x2 - x1) / 3
+                cell_height = (y2 - y1) / 3
+                
+                for i in range(1, 3):
+                    # Lignes verticales
+                    ax.axvline(x=x1 + i * cell_width, ymin=(y1/image.shape[0]), 
+                              ymax=(y2/image.shape[0]), color='white', linewidth=1, alpha=0.7)
+                    # Lignes horizontales
+                    ax.axhline(y=y1 + i * cell_height, xmin=(x1/image.shape[1]), 
+                              xmax=(x2/image.shape[1]), color='white', linewidth=1, alpha=0.7)
+                
+                ax.set_title(f'Face {face} ({face_names[face]})', fontsize=12, fontweight='bold')
+            else:
+                ax.text(0.5, 0.5, f'Face {face}\nnon trouvée', 
+                       ha='center', va='center', transform=ax.transAxes,
+                       fontsize=12, color='red')
+            
+            ax.axis('off')
+        
+        # Connecter l'événement de clic
+        fig.canvas.mpl_connect('button_press_event', self.on_click)
+        
+        # Ajouter les instructions
+        fig.text(0.5, 0.02, 'Cliquez sur une cellule dans la zone verte pour la sélectionner', 
+                ha='center', fontsize=12, style='italic')
+        
+        plt.tight_layout()
+        plt.show()
+
+
+def display_and_select_cell(roi_data, color_name):
+    """Affiche les faces et permet la sélection d'une cellule par clic"""
+    selector = FaceSelector(roi_data, color_name)
+    selector.load_face_images()
+    
+    if not selector.face_images:
+        print("Aucune image de face trouvée")
+        return None, None
+    
+    print(f"\nSélectionnez une cellule contenant du {color_name}")
+    print("Cliquez sur une cellule dans la zone verte de n'importe quelle face")
+    print("Fermez la fenêtre pour annuler")
+    
+    selector.display_faces()
+    
+    return selector.selected_face, selector.selected_cell
+
+
+def save_color_calibration(color_calibration):
+    """Sauvegarde la calibration des couleurs"""
+    color_filename = "rubiks_color_calibration.json"
+    
+    # Convertir en format JSON serializable
+    color_data = {}
+    for color_name, (r, g, b, tolerance) in color_calibration.items():
+        color_data[color_name] = [float(r), float(g), float(b), float(tolerance)]
+    
+    import json
+    with open(color_filename, 'w') as f:
+        json.dump({
+            "metadata": {
+                "created_at": __import__("datetime").datetime.now().isoformat(),
+                "colors_count": len(color_data),
+                "version": "1.0"
+            },
+            "color_data": color_data
+        }, f, indent=2)
+>>>>>>> screen-gui

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+<<<<<<< HEAD
 # ============================================================================
 #  check_dependencies.py
 #  ---------------------
@@ -53,6 +54,12 @@
 #         python3 tkinter_gui_robot.py
 # ============================================================================
 
+=======
+# =====================================================================
+# check_dependencies.py
+# Script de vérification des dépendances avant lancement du GUI robot
+# =====================================================================
+>>>>>>> screen-gui
 
 import sys
 import subprocess
@@ -123,6 +130,10 @@ def main():
         ("OpenCV", "cv2"),
         ("Pillow (PIL)", "PIL"),
         ("Kociemba", "kociemba"),
+<<<<<<< HEAD
+=======
+        ("Ultralytics (YOLO)", "ultralytics"),
+>>>>>>> screen-gui
         ("Colorama", "colorama"),
         ("Tkinter", "tkinter"),
     ]
@@ -140,7 +151,10 @@ def main():
         ("Picamera2", "picamera2"),
         ("Pytest", "pytest"),
         ("RubikTwoPhase", "RubikTwoPhase"),
+<<<<<<< HEAD
         ("Ultralytics (YOLO)", "ultralytics"),
+=======
+>>>>>>> screen-gui
     ]
     
     for name, import_name in optional_modules:
@@ -152,9 +166,15 @@ def main():
     print("\n📁 Fichiers du projet:")
     
     project_files = [
+<<<<<<< HEAD
         ("robot_moves_cubotino.py", "Module des mouvements robot"),
         ("Cubotino_T_moves.py", "Module des mouvements robot"),
         ("robot_solver.py", "Module solveur robot"),
+=======
+        ("robot_moves.py", "Module des mouvements robot"),
+        ("robot_solver.py", "Module solveur robot"),
+        ("tkinter_gui_robot.py", "Interface graphique robot"),
+>>>>>>> screen-gui
         ("calibration_rubiks.py", "Module de calibration"),
         ("process_images_cube.py", "Module de traitement d'images"),
         ("processing_rubiks.py", "Module de processing"),

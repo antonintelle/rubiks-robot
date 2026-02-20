@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #!/usr/bin/env python3
 # ============================================================================
 #  console_colors.py
@@ -37,6 +38,15 @@
 # ============================================================================
 
 
+=======
+# ============================================================================
+#  console_colors.py
+#  -----------------
+#  Utilitaire pour affichage coloré multiplateforme (Linux / Windows)
+#  Utilise colorama pour supporter les codes ANSI sur tous les systèmes.
+# ============================================================================
+
+>>>>>>> screen-gui
 from colorama import init, Fore, Style
 
 # Initialisation automatique (Windows + Linux)

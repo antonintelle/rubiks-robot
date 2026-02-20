@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #!/usr/bin/env python3
 # ============================================================================
 #  solver_wrapper.py
@@ -43,6 +44,30 @@
 # ============================================================================
 
 
+=======
+# solver_wrapper.py
+#
+# RÉSUMÉ : Wrapper générique pour différents solveurs de Rubik's Cube.
+# Actuellement supporte :
+#    - kociemba (pip install kociemba)
+#    - Kociemba two phase (pip install RubikTwoPhase)
+#
+# Objectif :
+#    Fournir une interface unifiée pour différents solveurs de cube,
+#    avec sélection dynamique de l’algorithme à employer.
+#
+# Important :
+#    → Dans cette version, le module "twophase" n’est PAS importé au démarrage,
+#      pour éviter les temps de chargement ou erreurs sur des systèmes sans RubikTwoPhase.
+#      Il n’est chargé qu’à la demande, si l’utilisateur choisit la méthode "k2".
+#
+# ============================================================================
+
+# ---------------------------------------------------------------------------
+# Import du solveur standard Kociemba
+# (chargé au démarrage car léger et souvent installé)
+# ---------------------------------------------------------------------------
+>>>>>>> screen-gui
 try:
     import kociemba
 except ImportError:

@@ -1,4 +1,5 @@
 #!/bin/bash
+<<<<<<< HEAD
 # ============================================================================
 #  DESINSTALLER.sh
 #  ---------------
@@ -40,6 +41,8 @@
 #     - Utilise sudo uniquement si nécessaire (fichiers root, dossiers créés via sudo).
 # ============================================================================
 
+=======
+>>>>>>> screen-gui
 set -e
 cd "$(dirname "$0")"
 
@@ -48,6 +51,7 @@ echo "🧹 Désinstallation du pipeline Rubik's Cube"
 echo "============================================================"
 echo
 
+<<<<<<< HEAD
 # Variables (cohérentes avec 0_install_pipeline.sh)
 VENV_DIR="$HOME/rubik-env"
 PROJECT_DIR="$(pwd)"
@@ -61,12 +65,16 @@ echo
 
 # Confirmation utilisateur
 read -p "⚠️  Confirmer la désinstallation ? (o/N) : " confirm
+=======
+read -p "⚠️  Cette action va supprimer l'environnement Python 'env' et les caches. Continuer ? (o/N) : " confirm
+>>>>>>> screen-gui
 confirm=${confirm,,}
 if [[ "$confirm" != "o" && "$confirm" != "oui" ]]; then
     echo "❌ Opération annulée."
     exit 0
 fi
 
+<<<<<<< HEAD
 echo
 echo "🚀 Lancement de la désinstallation..."
 echo
@@ -331,3 +339,29 @@ echo "   find . -user root  # Trouver fichiers root"
 echo "   sudo chown -R \$USER:\$USER .  # Corriger permissions"
 echo
 echo "============================================================"
+=======
+if [ -d "./env" ]; then
+    echo "🧱 Suppression de l'environnement virtuel..."
+    rm -rf ./env
+else
+    echo "ℹ️  Aucun environnement virtuel trouvé."
+fi
+
+echo "🧹 Nettoyage des fichiers temporaires..."
+find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+find . -type f -name "*.pyc" -delete 2>/dev/null || true
+
+if [ -d "./logs" ]; then
+    echo "🗑️  Suppression du dossier logs..."
+    rm -rf ./logs
+fi
+
+if [ -d "./.pytest_cache" ]; then
+    echo "🧪 Suppression du cache Pytest..."
+    rm -rf "./.pytest_cache"
+fi
+
+echo
+echo "✅ Désinstallation terminée avec succès."
+echo "============================================================"
+>>>>>>> screen-gui

@@ -3,6 +3,7 @@
 # text_gui.py - Interface texte principale du système Rubik's Cube
 # =============================================================================
 # RÉSUMÉ :
+<<<<<<< HEAD
 #   Interface texte “moderne” et modulaire pour piloter toutes les opérations du
 #   système Rubik’s Cube : calibrations, capture, vision/debug, conversion vers
 #   cubestring Kociemba (URFDLB), résolution, exécution robot, tests matériels
@@ -18,6 +19,14 @@
 #       + affichage “joli” des dict de résultats.
 #     - HistoryManager : historique des actions dans history.json (show/add/load/save).
 #     - RubiksTextGUI : boucle principale (menu -> dispatch handlers -> historique).
+=======
+#   Interface texte moderne et modulaire pour piloter toutes les opérations du
+#   système de reconnaissance, de calibration, de vision, de conversion Kociemba,
+#   de résolution et de pilotage robotisé du Rubik's Cube.
+#
+#   Cette version repose sur le module `rubiks_operations` pour exécuter les
+#   traitements réels, séparant ainsi la logique métier de l’interface utilisateur.
+>>>>>>> screen-gui
 #
 #   Structure du menu :
 #   ---------------------------------------------------------------------------
@@ -25,22 +34,31 @@
 #           c1 - Statut des calibrations
 #           c2 - Calibration des couleurs
 #           c3 - Calibration des zones (ROI)
+<<<<<<< HEAD
 #           c4 - Calibration des blancs (AWB) (option)
 #
 #       [CAPTURE]
 #           i1 - Capture d'images
 #           i2 - Capture d'images avec robot
 #
+=======
+#       [CAPTURE]
+#           i1 - Capture d'images
+>>>>>>> screen-gui
 #       [VISION]
 #           v1 - Diagnostic couleurs
 #           v2 - Debug vision et rotations
 #           v3 - Debug face spécifique
+<<<<<<< HEAD
 #
+=======
+>>>>>>> screen-gui
 #       [CONVERSION KOCIEMBA]
 #           k1 - Traiter le cube (mode graphique)
 #           k2 - Traiter le cube (mode texte)
 #           k3 - Traiter le cube (mode silencieux)
 #           k4 - Mode API debug
+<<<<<<< HEAD
 #
 #       [RESOLUTION]
 #           r1 - Résoudre un cube seul (chaîne)
@@ -59,6 +77,19 @@
 #           ro1 - Test moteur/servos
 #           ro2 - Test mouvements robot (saisie Singmaster)
 #
+=======
+#       [RESOLUTION]
+#           r1 - Résoudre un cube seul (chaîne)
+#       [PIPELINE]
+#           p1 - Test pipeline rapide
+#           p2 - Mode robot complet
+#       [TESTS GPIO]
+#           g1 - Lancer le menu de l’anneau lumineux
+#       [MOUVEMENTS ROBOT]
+#           (vide)
+#       [ROBOT]
+#           (vide)
+>>>>>>> screen-gui
 #       [UTILITAIRES]
 #           u1 - Nettoyer fichiers temporaires
 #           u2 - Informations système
@@ -66,6 +97,7 @@
 #           q  - Quitter
 #
 # =============================================================================
+<<<<<<< HEAD
 
 import sys
 import os
@@ -75,6 +107,18 @@ from colorama import init, Fore, Style
 from datetime import datetime
 from typing import Dict
 from anneau_lumineux import eteindre_force
+=======
+# AUTEUR  : Projet Rubik's Cube
+# VERSION : 2.1
+# DATE    : 2025-10-25
+# =============================================================================
+
+import sys
+import os
+from colorama import init, Fore, Style
+from datetime import datetime
+from typing import Dict
+>>>>>>> screen-gui
 
 from rubiks_operations import RubiksOperations
 
@@ -189,12 +233,19 @@ class RubiksTextGUI:
 
         print(Fore.MAGENTA + "[CALIBRATION]" + Style.RESET_ALL)
         print(" c1 - Statut des calibrations")
+<<<<<<< HEAD
         #print(" c2 - Calibration des couleurs")
         print(" c3 - Calibration des zones (ROI)")
         #print(" c4 - Calibration des blancs")
         print(Fore.MAGENTA + "[CAPTURE]" + Style.RESET_ALL)
         print(" i1 - Capture d'images")
         print(" i2 - Capture d'images avec robot")
+=======
+        print(" c2 - Calibration des couleurs")
+        print(" c3 - Calibration des zones (ROI)")
+        print(Fore.MAGENTA + "[CAPTURE]" + Style.RESET_ALL)
+        print(" i1 - Capture d'images")
+>>>>>>> screen-gui
         print(Fore.MAGENTA + "[VISION]" + Style.RESET_ALL)
         print(" v1 - Diagnostic couleurs")
         print(" v2 - Debug vision et rotations")
@@ -208,6 +259,7 @@ class RubiksTextGUI:
         print(" r1 - Résoudre un cube seul (chaîne)")
         print(Fore.MAGENTA + "[PIPELINE]" + Style.RESET_ALL)
         print(" p1 - Test pipeline rapide")
+<<<<<<< HEAD
         print(" p2 - Mode robot complet SANS mouvements")
         print(" p3 - Mode robot complet AVEC mouvements")
         print(Fore.MAGENTA + "[TESTS ECRAN ET LUMIERE]" + Style.RESET_ALL)
@@ -216,6 +268,15 @@ class RubiksTextGUI:
         print(Fore.MAGENTA + "[ROBOT]" + Style.RESET_ALL)
         print(" ro1 - Lancer le test de mouvement du robot")
         print(" ro2 - Lancer le test de commandes singmaster avec le robot")
+=======
+        print(" p2 - Mode robot complet")
+        print(Fore.MAGENTA + "[TESTS GPIO]" + Style.RESET_ALL)
+        print(" g1 - Lancer le menu de l’anneau lumineux")
+        print(Fore.MAGENTA + "[MOUVEMENTS ROBOT]" + Style.RESET_ALL)
+        print("   (vide)")
+        print(Fore.MAGENTA + "[ROBOT]" + Style.RESET_ALL)
+        print("   (vide)")
+>>>>>>> screen-gui
         print(Fore.MAGENTA + "[UTILITAIRES]" + Style.RESET_ALL)
         print(" u1 - Nettoyer fichiers temporaires")
         print(" u2 - Informations système")
@@ -225,6 +286,7 @@ class RubiksTextGUI:
     # -------------------------------------------------------------------------
     # HANDLERS
     # -------------------------------------------------------------------------
+<<<<<<< HEAD
     def handle_test_tft(self):
         Display.section("TFT - GIF durée perso")
 
@@ -335,6 +397,8 @@ class RubiksTextGUI:
         else:
             Display.error(result.get("error", "Erreur inconnue"))            
 
+=======
+>>>>>>> screen-gui
     def handle_calibration_status(self):
         Display.section("STATUT DES CALIBRATIONS")
         result = self.ops.get_calibration_status()
@@ -358,6 +422,7 @@ class RubiksTextGUI:
         self.history.add(f"Debug face {face}", result)
         Display.success(result["message"]) if result["success"] else Display.error(result["error"])
 
+<<<<<<< HEAD
     def open_url(self, url):
         """Affiche l'URL au lieu d'essayer de l'ouvrir"""
         print("\n" + "="*70)
@@ -392,6 +457,18 @@ class RubiksTextGUI:
                     Display.error("URL demandée mais absente du résultat (clé 'url' manquante).")
         else:
             Display.error(result.get("error", "Erreur inconnue"))
+=======
+    def handle_solve_cube(self):
+        Display.section("RÉSOLUTION D’UN CUBE")
+        cube = Display.prompt("Chaîne Singmaster (54 caractères)")
+        if len(cube) != 54:
+            Display.error("Chaîne invalide")
+            return
+        url = Display.prompt("Générer URL de visualisation ? (o/n)").lower() in ["o", "oui", "y"]
+        result = self.ops.solve_and_get_url(cube) if url else self.ops.solve_cube(cube)
+        self.history.add("Résolution cube", result)
+        Display.result_data(result["data"]) if result["success"] else Display.error(result["error"])
+>>>>>>> screen-gui
 
     def handle_gpio_ring(self):
         Display.section("TEST GPIO - ANNEAU LUMINEUX")
@@ -402,10 +479,13 @@ class RubiksTextGUI:
         else:
             Display.error(result.get("error", "Erreur inconnue"))
 
+<<<<<<< HEAD
     def handle_led_off(self):
         Display.section("FORCER LEDS OFF")
         eteindre_force()          
 
+=======
+>>>>>>> screen-gui
     def handle_cleanup_files(self):
             """Gère le nettoyage des fichiers temporaires avec affichage"""
             Display.section("NETTOYAGE FICHIERS TEMPORAIRES")
@@ -520,6 +600,7 @@ class RubiksTextGUI:
         else:
             Display.error(result.get("error", "Erreur lors de la calibration"))
 
+<<<<<<< HEAD
 
     def handle_calibrate_blancs(self):
         """Calibration des blancs"""
@@ -531,6 +612,8 @@ class RubiksTextGUI:
         else:
             Display.error(result.get("error", "Erreur lors de la calibration des blancs"))            
 
+=======
+>>>>>>> screen-gui
     def handle_capture_images(self):
         """Capture d'images avec affichage du résultat"""
         Display.section("CAPTURE D'IMAGES")
@@ -543,6 +626,7 @@ class RubiksTextGUI:
         else:
             Display.error(result.get("error", "Erreur lors de la capture"))
 
+<<<<<<< HEAD
     def handle_capture_images_robot(self):
         """Capture d'images avec affichage du résultat + mouvements robot"""
         Display.section("CAPTURE D'IMAGES AVEC ROBOT")
@@ -555,6 +639,8 @@ class RubiksTextGUI:
         else:
             Display.error(result.get("error", "Erreur lors de la capture+robot"))
 
+=======
+>>>>>>> screen-gui
     def handle_debug_color_mapping(self):
         """Diagnostic couleurs avec affichage du résultat"""
         Display.section("DIAGNOSTIC COULEURS")
@@ -603,10 +689,17 @@ class RubiksTextGUI:
         else:
             Display.error(result.get("error", "Erreur lors du test"))
 
+<<<<<<< HEAD
     def handle_robot_mode(self,do_solve : bool = True,do_execute : bool = False):
         """Mode robot complet avec affichage du résultat"""
         Display.section("MODE ROBOT COMPLET")
         result = self.ops.run_robot_mode(do_solve,do_execute)
+=======
+    def handle_robot_mode(self):
+        """Mode robot complet avec affichage du résultat"""
+        Display.section("MODE ROBOT COMPLET")
+        result = self.ops.run_robot_mode()
+>>>>>>> screen-gui
         self.history.add("Mode robot", result)
         if result["success"]:
             Display.success(result.get("message", "Mode robot terminé"))
@@ -627,9 +720,13 @@ class RubiksTextGUI:
                 if choice == "c1": self.handle_calibration_status()
                 elif choice == "c2": self.handle_calibrate_colors()
                 elif choice == "c3": self.handle_calibrate_zones()
+<<<<<<< HEAD
                 elif choice == "c4": self.handle_calibrate_blancs()
                 elif choice == "i1": self.handle_capture_images()
                 elif choice == "i2": self.handle_capture_images_robot()
+=======
+                elif choice == "i1": self.handle_capture_images()
+>>>>>>> screen-gui
                 elif choice == "v1": self.handle_debug_color_mapping()
                 elif choice == "v2": self.handle_debug_vision()
                 elif choice == "v3": self.handle_debug_face()
@@ -639,6 +736,7 @@ class RubiksTextGUI:
                 elif choice == "k4": self.handle_api_mode()
                 elif choice == "r1": self.handle_solve_cube()
                 elif choice == "p1": self.handle_quick_pipeline_test()
+<<<<<<< HEAD
                 elif choice == "p2": self.handle_robot_mode(do_solve=True,do_execute=False)
                 elif choice == "p3": self.handle_robot_mode(do_solve=True,do_execute=True)
                 elif choice == "g1": self.handle_gpio_ring()
@@ -646,6 +744,10 @@ class RubiksTextGUI:
                 elif choice == "g3": self.handle_led_off()
                 elif choice == "ro1": self.handle_test_robot()
                 elif choice == "ro2": self.handle_test_mouvements_robot()
+=======
+                elif choice == "p2": self.handle_robot_mode()
+                elif choice == "g1": self.handle_gpio_ring()
+>>>>>>> screen-gui
                 elif choice == "u1": self.handle_cleanup_files()
                 elif choice == "u2": self.handle_system_info()
                 elif choice == "u3": self.history.show()

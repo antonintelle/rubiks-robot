@@ -860,6 +860,7 @@
     "success": true,
     "error": null,
     "message": "Aucun fichier temporaire \u00e0 supprimer"
+<<<<<<< HEAD
   },
   {
     "timestamp": "2025-11-09T18:44:24",
@@ -10415,5 +10416,7 @@
     "success": false,
     "error": "Face invalide: . Utilisez F, R, B, L, U ou D",
     "message": null
+=======
+>>>>>>> screen-gui
   }
 ]

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+<<<<<<< HEAD
 # ============================================================================
 #  auto.py  (keypad_autolearn.py) - Apprentissage interactif clavier 4x4
 #  --------------------------------------------------------------------
@@ -41,6 +42,11 @@
 #     - En fin de programme : fermeture du chip (gpiochip_close) en finally.
 #     - Le mapping dépend de l’ordre de détection et des pins choisies dans ALL_PINS.
 # ============================================================================
+=======
+# ============================================================
+# keypad_autolearn.py - Apprentissage interactif du clavier 4x4
+# ============================================================
+>>>>>>> screen-gui
 
 import lgpio
 import time

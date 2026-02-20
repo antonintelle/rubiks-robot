@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+<<<<<<< HEAD
 # ============================================================================
 #  keypad_controller.py
 #  --------------------
@@ -46,6 +47,14 @@
 #     - time (temporisations)
 # ============================================================================
 
+=======
+# ============================================================
+# keypad_controller.py  –  Gestion du clavier matriciel 4x4 (lgpio)
+# ============================================================
+# Compatible Raspberry Pi OS Bookworm, sans sudo.
+# Mapping confirmé avec GPIO 22,19,16,20,26,13,5,6
+# ------------------------------------------------------------
+>>>>>>> screen-gui
 
 import lgpio
 import threading
